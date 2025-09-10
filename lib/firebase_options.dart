@@ -26,51 +26,51 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:web:YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'your-project-id',
-    authDomain: 'your-project-id.firebaseapp.com',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyDmlUKgAnMmGe51K18V1FEpX37UY0ZdFrk',
+    appId: '1:940330317059:web:a1b2c3d4e5f6g7h8i9j0',
+    messagingSenderId: '940330317059',
+    projectId: 'hacklite-9c06e',
+    authDomain: 'hacklite-9c06e.firebaseapp.com',
+    storageBucket: 'hacklite-9c06e.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:android:YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyDmlUKgAnMmGe51K18V1FEpX37UY0ZdFrk',
+    appId: '1:940330317059:android:1cf71dfe6af37dd2052536',
+    messagingSenderId: '940330317059',
+    projectId: 'hacklite-9c06e',
+    storageBucket: 'hacklite-9c06e.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:ios:YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyDmlUKgAnMmGe51K18V1FEpX37UY0ZdFrk',
+    appId: '1:940330317059:ios:a1b2c3d4e5f6g7h8i9j0',
+    messagingSenderId: '940330317059',
+    projectId: 'hacklite-9c06e',
+    storageBucket: 'hacklite-9c06e.firebasestorage.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:macos:YOUR_MACOS_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyDmlUKgAnMmGe51K18V1FEpX37UY0ZdFrk',
+    appId: '1:940330317059:macos:a1b2c3d4e5f6g7h8i9j0',
+    messagingSenderId: '940330317059',
+    projectId: 'hacklite-9c06e',
+    storageBucket: 'hacklite-9c06e.firebasestorage.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:windows:YOUR_WINDOWS_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyDmlUKgAnMmGe51K18V1FEpX37UY0ZdFrk',
+    appId: '1:940330317059:windows:a1b2c3d4e5f6g7h8i9j0',
+    messagingSenderId: '940330317059',
+    projectId: 'hacklite-9c06e',
+    storageBucket: 'hacklite-9c06e.firebasestorage.app',
   );
 
   static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:linux:YOUR_LINUX_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyDmlUKgAnMmGe51K18V1FEpX37UY0ZdFrk',
+    appId: '1:940330317059:linux:a1b2c3d4e5f6g7h8i9j0',
+    messagingSenderId: '940330317059',
+    projectId: 'hacklite-9c06e',
+    storageBucket: 'hacklite-9c06e.firebasestorage.app',
   );
 }

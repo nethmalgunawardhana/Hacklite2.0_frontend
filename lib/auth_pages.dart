@@ -361,19 +361,41 @@ class _SignUpPageState extends State<SignUpPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // After successful sign up, navigate back to login
+
+      // Sign out immediately after account creation to prevent auto-login
+      await FirebaseAuth.instance.signOut();
+
+      // Clear form fields
+      _emailController.clear();
+      _passwordController.clear();
+      _confirmPasswordController.clear();
+
+      // Show success message
       if (mounted) {
-        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Account created successfully! Please sign in.'),
+            content: Text(
+              'Account created successfully! Please sign in with your credentials.',
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
           ),
         );
+
+        // Navigate back to login page after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        });
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'An error occurred')),
+          SnackBar(
+            content: Text(e.message ?? 'An error occurred'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
