@@ -5,6 +5,7 @@ import 'quiz_selector_page.dart';
 import 'leaderboard_page.dart';
 import 'sign_learning_page.dart';
 import 'goal_setting_page.dart';
+import 'sign_dictionary_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -424,9 +425,11 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.book,
                           Colors.purple,
                           () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('ASL Dictionary - Coming Soon!'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SignDictionaryPage(),
                               ),
                             );
                           },
@@ -605,7 +608,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Center(
             child: Column(
               children: [
-                Icon(Icons.history, size: 48, color: Colors.grey),
+                Icon(Icons.timeline, size: 48, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
                   'No recent activities yet',
@@ -842,67 +845,6 @@ class _DashboardPageState extends State<DashboardPage> {
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-
-  Widget _buildLeaderboardButton() {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const LeaderboardPage()),
-          );
-        },
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.amber, Colors.orange],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.leaderboard,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'View Leaderboard',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'See how you rank against other learners',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
