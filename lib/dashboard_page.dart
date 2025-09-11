@@ -191,8 +191,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionCard(
-                          'Practice',
-                          'Learn new signs',
+                          'Quizzes',
+                          'Learn and test your skills',
                           Icons.school,
                           Colors.orange,
                           () {
