@@ -212,6 +212,34 @@ class _ProfilePageState extends State<ProfilePage>
                                     ],
                                   ),
                                 ),
+                                const SizedBox(height: 32),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: ElevatedButton.icon(
+                                    onPressed: () async {
+                                      await FirebaseAuth.instance.signOut();
+                                      // Optionally navigate to login page or let AuthWrapper handle it
+                                      Navigator.of(context).popUntil((route) => route.isFirst);
+                                    },
+                                    icon: const Icon(Icons.logout, color: Colors.white),
+                                    label: const Text(
+                                      'Sign Out',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(height: 40),
                               ],
                             ),
