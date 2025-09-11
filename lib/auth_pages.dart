@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -120,7 +122,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   children: [
                     const SizedBox(height: 40),
 
-                    // App Logo/Icon (Enhanced)
+
                     TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: 1),
                       duration: const Duration(milliseconds: 1500),
@@ -128,31 +130,42 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                         return Transform.scale(
                           scale: value,
                           child: Container(
-                            width: 80,
-                            height: 80,
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Colors.blue, Colors.blueAccent],
-                              ),
                               borderRadius: BorderRadius.circular(25),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.blue.withOpacity(0.3),
-                                  spreadRadius: 2,
+                                  color: Colors.black.withOpacity(0.1),
                                   blurRadius: 15,
                                   offset: const Offset(0, 5),
                                 ),
                               ],
                             ),
-                            child: const Icon(
-                              Icons.security,
-                              size: 40,
-                              color: Colors.white,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(25),
+                              child: SvgPicture.asset(
+                                'assets/images/logo.svg',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.contain,
+                                semanticsLabel: 'App logo',
+                                placeholderBuilder: (context) => Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         );
                       },
                     ),
+
                     const SizedBox(height: 20),
 
                     // Welcome Text with enhanced styling
