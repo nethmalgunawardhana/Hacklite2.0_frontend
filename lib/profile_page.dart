@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'about_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -197,11 +198,16 @@ class _ProfilePageState extends State<ProfilePage>
                                         () {},
                                       ),
                                       _buildModernMenuItem(
-                                        'About Hacklite 2.0',
-                                        'Learn more about our mission',
+                                        'About & Features',
+                                        'Learn more about this app',
                                         Icons.info_outline,
                                         const Color(0xFF4ECDC4),
-                                        () => _showModernAboutDialog(context),
+                                        () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const AboutPage(),
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -418,7 +424,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  "About Hacklite 2.0",
+                  "About WaveWords",
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -427,7 +433,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  "Hacklite 2.0 is an innovative sign language translation app bridging communication gaps.",
+                  "WaveWords is an innovative sign language translation app bridging communication gaps.",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Color(0xFF42A5F5)),
                 ),
