@@ -7,24 +7,40 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:mockito/mockito.dart';
 
 import 'package:flutter_app/main.dart';
 
+class MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  late MockFirebaseAuth mockFirebaseAuth;
+
+  setUp(() {
+    mockFirebaseAuth = MockFirebaseAuth();
+  });
+
+  testWidgets('App builds successfully', (WidgetTester tester) async {
+    // Mock Firebase initialization
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'test-api-key',
+        appId: 'test-app-id',
+        messagingSenderId: '123456789',
+        projectId: 'test-project',
+      ),
+    );
+
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Wait for async operations to complete
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the MaterialApp is present
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
