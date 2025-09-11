@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'quiz_selector_page.dart';
 import 'leaderboard_page.dart';
+import 'sign_learning_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -227,14 +228,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionCard(
-                          'Games',
-                          'Fun learning activities',
-                          Icons.games,
-                          Colors.red,
+                          'Practice New Sign',
+                          'Learn sign language basics',
+                          Icons.sign_language,
+                          Colors.teal,
                           () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Games - Coming Soon!'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignLearningPage(),
                               ),
                             );
                           },
