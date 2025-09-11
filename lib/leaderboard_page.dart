@@ -408,20 +408,17 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         end: Alignment.centerRight,
                       )
                     : index < 3
-                        ? LinearGradient(
-                            colors: [
-                              _getRankColor(index).withOpacity(0.1),
-                              _getRankColor(index).withOpacity(0.05),
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          )
-                        : null,
-                border: isCurrentUser
-                    ? Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                        width: 1,
+                    ? LinearGradient(
+                        colors: [
+                          _getRankColor(index).withOpacity(0.1),
+                          _getRankColor(index).withOpacity(0.05),
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                       )
+                    : null,
+                border: isCurrentUser
+                    ? Border.all(color: Colors.white.withOpacity(0.3), width: 1)
                     : null,
               ),
               child: ListTile(
@@ -432,7 +429,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [_getRankColor(index), _getRankColor(index).withOpacity(0.7)],
+                      colors: [
+                        _getRankColor(index),
+                        _getRankColor(index).withOpacity(0.7),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -503,13 +503,17 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         Icon(
                           Icons.quiz,
                           size: 16,
-                          color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                          color: isCurrentUser
+                              ? Colors.white70
+                              : Colors.grey[600],
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${entry['score']}/${entry['totalQuestions']} correct',
                           style: TextStyle(
-                            color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                            color: isCurrentUser
+                                ? Colors.white70
+                                : Colors.grey[600],
                             fontSize: 14,
                           ),
                         ),
@@ -521,14 +525,18 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         Icon(
                           Icons.book,
                           size: 16,
-                          color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                          color: isCurrentUser
+                              ? Colors.white70
+                              : Colors.grey[600],
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             entry['quizTitle'] as String,
                             style: TextStyle(
-                              color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                              color: isCurrentUser
+                                  ? Colors.white70
+                                  : Colors.grey[600],
                               fontSize: 12,
                             ),
                             maxLines: 1,
@@ -559,7 +567,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   child: Text(
                     '${entry['percentage']}%',
                     style: TextStyle(
-                      color: isCurrentUser ? Colors.white : const Color(0xFF4facfe),
+                      color: isCurrentUser
+                          ? Colors.white
+                          : const Color(0xFF4facfe),
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),

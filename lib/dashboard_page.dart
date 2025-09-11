@@ -8,7 +8,9 @@ import 'goal_setting_page.dart';
 import 'sign_dictionary_page.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final VoidCallback? onNavigateToCamera;
+
+  const DashboardPage({super.key, this.onNavigateToCamera});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -386,13 +388,17 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.camera_alt,
                           Colors.green,
                           () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Switch to Camera tab to start translating!',
+                            if (widget.onNavigateToCamera != null) {
+                              widget.onNavigateToCamera!();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Switch to Camera tab to start translating!',
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            }
                           },
                         ),
                       ),
