@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to capture sign language gestures</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for audio recording</string>
 </dict>
 </plist>
