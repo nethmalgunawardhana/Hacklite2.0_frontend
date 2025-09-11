@@ -608,7 +608,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Center(
             child: Column(
               children: [
-                Icon(Icons.history, size: 48, color: Colors.grey),
+                Icon(Icons.timeline, size: 48, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
                   'No recent activities yet',

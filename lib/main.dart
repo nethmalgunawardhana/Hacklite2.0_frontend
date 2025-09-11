@@ -5,7 +5,6 @@ import 'firebase_options.dart';
 import 'auth_pages.dart';
 import 'dashboard_page.dart';
 import 'profile_page.dart';
-import 'history_page.dart';
 import 'camera_page.dart';
 import 'leaderboard_page.dart';
 
@@ -82,7 +81,6 @@ class _HomePageState extends State<HomePage> {
     CameraPage(),
     LeaderboardPage(),
     ProfilePage(),
-    HistoryPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -110,7 +108,6 @@ class _HomePageState extends State<HomePage> {
             label: 'Leaderboard',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
