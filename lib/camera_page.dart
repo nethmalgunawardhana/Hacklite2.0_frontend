@@ -46,7 +46,7 @@ class _CameraPageState extends State<CameraPage> {
       cameras = await availableCameras();
       if (cameras != null && cameras!.isNotEmpty) {
         _controller = CameraController(
-          cameras![0], // Use the first available camera
+          cameras![0],
           ResolutionPreset.medium,
         );
 
@@ -81,14 +81,58 @@ class _CameraPageState extends State<CameraPage> {
     return Scaffold(
       body: Column(
         children: [
-          // Camera preview at the top
+          // Top Camera Section
           Expanded(
             flex: 3,
             child: Container(
-              color: Colors.black,
-              child: _isPermissionGranted
-                  ? (_isCameraInitialized && _controller != null
-                        ? CameraPreview(_controller!)
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+                child: _isPermissionGranted
+                    ? (_isCameraInitialized && _controller != null
+                        ? Stack(
+                            children: [
+                              CameraPreview(_controller!),
+                              // Overlay if needed
+                              Positioned(
+                                bottom: 8,
+                                left: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black38,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    "Camera Active",
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 14),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
                         : Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -108,59 +152,94 @@ class _CameraPageState extends State<CameraPage> {
                               ],
                             ),
                           ))
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 64,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _statusText,
-                            style: const TextStyle(
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.camera_alt,
                               color: Colors.white,
-                              fontSize: 16,
+                              size: 64,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _requestPermissions,
-                            child: const Text('Grant Permissions'),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            Text(
+                              _statusText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _requestPermissions,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
+                              ),
+                              child: const Text('Grant Permissions'),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
 
-          // Sign language translation section at the bottom
+          // Translation Section
           Expanded(
             flex: 2,
             child: Container(
-              padding: const EdgeInsets.all(16.0),
-              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Sign Language Translation',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
+                  Row(
+                    children: const [
+                      Text(
+                        'Sign Language Translation',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.info_outline, size: 20, color: Colors.blueGrey),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: SingleChildScrollView(
                         child: Text(
@@ -180,7 +259,6 @@ class _CameraPageState extends State<CameraPage> {
                       ElevatedButton.icon(
                         onPressed: _isCameraInitialized
                             ? () {
-                                // TODO: Implement start translation with ML model
                                 setState(() {
                                   _translationText =
                                       "Starting sign language recognition...\n\nDetected gestures will appear here.";
@@ -191,11 +269,14 @@ class _CameraPageState extends State<CameraPage> {
                         label: const Text('Start'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                       ElevatedButton.icon(
                         onPressed: () {
-                          // TODO: Implement stop translation
                           setState(() {
                             _translationText =
                                 "Sign language translation stopped.";
@@ -205,6 +286,10 @@ class _CameraPageState extends State<CameraPage> {
                         label: const Text('Stop'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ],
