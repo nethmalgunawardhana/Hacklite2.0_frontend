@@ -8,7 +8,67 @@ class HandLandmarkProcessor {
   static const double minConfidence = 0.6;
   static const double highConfidence = 0.8;
 
-  /// Extract hand landmarks from pose detection
+  /// Extract hand landmarks from pose detection and return as coordinate list
+  List<double> extractHandLandmarkVector(Pose pose) {
+    // Try to get the best hand (right hand preferred for consistency)
+    final rightWrist = pose.landmarks[PoseLandmarkType.rightWrist];
+    final leftWrist = pose.landmarks[PoseLandmarkType.leftWrist];
+
+    PoseLandmark? primaryWrist;
+
+    if (rightWrist != null && rightWrist.likelihood > minConfidence) {
+      primaryWrist = rightWrist;
+    } else if (leftWrist != null && leftWrist.likelihood > minConfidence) {
+      primaryWrist = leftWrist;
+    } else {
+      return []; // No usable hand detected
+    }
+
+    // Create 21-point landmark vector (simplified - we'll pad missing points)
+    final landmarks = <double>[];
+
+    // MediaPipe hand landmark order (simplified mapping from pose landmarks)
+    final landmarkOrder = [
+      primaryWrist, // 0: WRIST
+      pose.landmarks[PoseLandmarkType.rightThumb], // 1-4: THUMB (simplified)
+      pose.landmarks[PoseLandmarkType.rightThumb],
+      pose.landmarks[PoseLandmarkType.rightThumb],
+      pose.landmarks[PoseLandmarkType.rightThumb],
+      pose.landmarks[PoseLandmarkType.rightIndex], // 5-8: INDEX
+      pose.landmarks[PoseLandmarkType.rightIndex],
+      pose.landmarks[PoseLandmarkType.rightIndex],
+      pose.landmarks[PoseLandmarkType.rightIndex],
+      primaryWrist, // 9-12: MIDDLE (use wrist as approximation)
+      primaryWrist,
+      primaryWrist,
+      primaryWrist,
+      primaryWrist, // 13-16: RING (use wrist as approximation)
+      primaryWrist,
+      primaryWrist,
+      primaryWrist,
+      pose.landmarks[PoseLandmarkType.rightPinky], // 17-20: PINKY
+      pose.landmarks[PoseLandmarkType.rightPinky],
+      pose.landmarks[PoseLandmarkType.rightPinky],
+      pose.landmarks[PoseLandmarkType.rightPinky],
+    ];
+
+    // Convert to coordinate vector
+    for (int i = 0; i < 21; i++) {
+      final landmark = i < landmarkOrder.length
+          ? landmarkOrder[i]
+          : primaryWrist;
+      if (landmark != null) {
+        landmarks.addAll([landmark.x, landmark.y, landmark.z]);
+      } else {
+        // Use wrist position for missing landmarks
+        landmarks.addAll([primaryWrist.x, primaryWrist.y, primaryWrist.z]);
+      }
+    }
+
+    return landmarks.length == 63 ? landmarks : [];
+  }
+
+  /// Extract hand landmarks from pose detection (legacy method)
   List<HandLandmark> extractHandLandmarksFromPose(Pose pose) {
     List<HandLandmark> landmarks = [];
 

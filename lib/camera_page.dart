@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'services/asl_detection_service.dart';
 import 'models/asl_prediction.dart';
+import 'widgets/hand_capture_widget.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -32,6 +33,11 @@ class _CameraPageState extends State<CameraPage> {
   Timer? _detectionTimer;
   String _detectedSentence = "";
   CameraImage? _currentCameraImage; // Store current camera frame
+
+  // Hand capture variables
+  bool _isCapturing = false;
+  Timer? _captureTimer;
+  final GlobalKey<State<HandCaptureWidget>> _captureWidgetKey = GlobalKey();
 
   @override
   void initState() {
@@ -242,9 +248,53 @@ class _CameraPageState extends State<CameraPage> {
   @override
   void dispose() {
     _detectionTimer?.cancel();
+    _captureTimer?.cancel();
     _controller?.dispose();
     _aslService.dispose();
     super.dispose();
+  }
+
+  void _startCapture() {
+    if (!_isCameraInitialized) return;
+
+    setState(() {
+      _isCapturing = true;
+    });
+
+    // Capture landmarks every 200ms while capturing
+    _captureTimer = Timer.periodic(
+      const Duration(milliseconds: 200),
+      (timer) => _captureLandmarks(),
+    );
+  }
+
+  void _stopCapture() {
+    setState(() {
+      _isCapturing = false;
+    });
+
+    _captureTimer?.cancel();
+    _captureTimer = null;
+  }
+
+  Future<void> _captureLandmarks() async {
+    if (!_isCapturing || _currentCameraImage == null) return;
+
+    try {
+      final landmarks = await _aslService.getLandmarkVector(
+        cameraImage: _currentCameraImage,
+      );
+
+      if (landmarks != null && landmarks.isNotEmpty) {
+        // Send landmarks to capture widget
+        final widgetState = _captureWidgetKey.currentState;
+        if (widgetState != null) {
+          (widgetState as dynamic).processLandmarks(landmarks);
+        }
+      }
+    } catch (e) {
+      print('Error capturing landmarks: $e');
+    }
   }
 
   @override
@@ -496,6 +546,14 @@ class _CameraPageState extends State<CameraPage> {
                                 ),
                               ),
                             ),
+
+                          // Hand Capture Widget
+                          HandCaptureWidget(
+                            key: _captureWidgetKey,
+                            isCapturing: _isCapturing,
+                            onStartCapture: _startCapture,
+                            onStopCapture: _stopCapture,
+                          ),
                         ],
                       ),
                     ),

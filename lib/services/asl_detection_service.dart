@@ -6,6 +6,8 @@ import '../utils/camera_stream_processor.dart';
 import '../utils/gesture_stabilizer.dart';
 import '../utils/word_recognizer.dart';
 import '../models/asl_prediction.dart';
+import 'landmark_storage.dart';
+import 'knn_classifier.dart';
 
 class ASLDetectionService {
   static ASLDetectionService? _instance;
@@ -167,24 +169,39 @@ class ASLDetectionService {
     }
   }
 
-  /// Detect ASL gesture from image path - Real ML Kit implementation
-  Future<ASLPrediction?> detectFromImagePath(String imagePath) async {
+  /// Get hand landmarks as coordinate vector for k-NN training/inference
+  Future<List<double>?> getLandmarkVector({CameraImage? cameraImage}) async {
     if (!_isInitialized) {
       await initialize();
     }
 
     try {
-      if (imagePath.isEmpty) {
-        print('⚠️ No image path provided');
+      if (cameraImage == null) {
+        print('❌ No camera image provided for landmark extraction');
         return null;
       }
 
-      // For file-based detection, would need to load image and process
-      // Currently not implemented - return null for honest behavior
-      print('⚠️ Image path detection not yet implemented');
-      return null;
+      // Convert camera image to InputImage
+      final inputImage = _convertCameraImageToInputImage(cameraImage);
+      if (inputImage == null) {
+        print('❌ Failed to convert camera image to InputImage');
+        return null;
+      }
+
+      // Detect poses
+      final poses = await _poseDetector!.processImage(inputImage);
+
+      if (poses.isEmpty) return null;
+
+      // Extract landmarks from the first detected pose
+      final pose = poses.first;
+      final landmarkVector = _landmarkProcessor!.extractHandLandmarkVector(
+        pose,
+      );
+
+      return landmarkVector.isNotEmpty ? landmarkVector : null;
     } catch (e) {
-      print('❌ Error processing image from path: $e');
+      print('❌ Error extracting landmark vector: $e');
       return null;
     }
   }
