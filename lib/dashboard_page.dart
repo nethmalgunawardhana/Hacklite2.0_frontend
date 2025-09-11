@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'quiz_selector_page.dart';
+import 'leaderboard_page.dart';
+import 'sign_learning_page.dart';
+import 'goal_setting_page.dart';
+import 'sign_dictionary_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -11,9 +17,278 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final User? user = FirebaseAuth.instance.currentUser;
 
+  // User stats
+  int quizzesTaken = 0;
+  double averageScore = 0.0;
+  int bestScore = 0;
+  bool isLoadingStats = true;
+
+  // User goals
+  int dailySignGoal = 5;
+  int dailyPracticeMinutes = 15;
+  int dailyQuizGoal = 2;
+  double targetScore = 80.0;
+  bool isLoadingGoals = true;
+
+  // Goal progress tracking
+  int signsLearnedToday = 0;
+  int practiceMinutesToday = 0;
+  int quizzesCompletedToday = 0;
+  bool isLoadingProgress = true;
+
+  // Recent activities
+  List<Map<String, dynamic>> recentActivities = [];
+  bool isLoadingActivities = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserStats();
+    _fetchUserGoals();
+    _fetchTodayProgress();
+    _fetchRecentActivities();
+  }
+
+  Future<void> _fetchUserStats() async {
+    if (user == null) {
+      setState(() {
+        isLoadingStats = false;
+      });
+      return;
+    }
+
+    try {
+      // Fetch user's quiz scores from leaderboard collection
+      final snapshot = await FirebaseFirestore.instance
+          .collection('leaderboard')
+          .where('userId', isEqualTo: user!.uid)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        setState(() {
+          isLoadingStats = false;
+        });
+        return;
+      }
+
+      int totalScore = 0;
+      int maxScore = 0;
+      int totalQuizzes = snapshot.docs.length;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final percentage = data['percentage'] as int? ?? 0;
+        totalScore += percentage;
+        if (percentage > maxScore) {
+          maxScore = percentage;
+        }
+      }
+
+      setState(() {
+        quizzesTaken = totalQuizzes;
+        averageScore = totalQuizzes > 0 ? totalScore / totalQuizzes : 0.0;
+        bestScore = maxScore;
+        isLoadingStats = false;
+      });
+    } catch (e) {
+      print('Error fetching user stats: $e');
+      setState(() {
+        isLoadingStats = false;
+      });
+    }
+  }
+
+  Future<void> _fetchUserGoals() async {
+    if (user == null) {
+      setState(() {
+        isLoadingGoals = false;
+      });
+      return;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('user_goals')
+          .doc(user!.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          dailySignGoal = data['dailySignGoal'] ?? 5;
+          dailyPracticeMinutes = data['dailyPracticeMinutes'] ?? 15;
+          dailyQuizGoal = data['dailyQuizGoal'] ?? 2;
+          targetScore = (data['targetScore'] ?? 80.0).toDouble();
+        });
+      }
+    } catch (e) {
+      print('Error fetching user goals: $e');
+    } finally {
+      setState(() {
+        isLoadingGoals = false;
+      });
+    }
+  }
+
+  Future<void> _fetchTodayProgress() async {
+    if (user == null) {
+      setState(() {
+        isLoadingProgress = false;
+      });
+      return;
+    }
+
+    try {
+      final today = DateTime.now().toIso8601String().split('T')[0];
+
+      // Fetch today's quiz progress
+      final quizSnapshot = await FirebaseFirestore.instance
+          .collection('leaderboard')
+          .where('userId', isEqualTo: user!.uid)
+          .where('date', isEqualTo: today)
+          .get();
+
+      // Fetch today's sign learning progress
+      final signProgressDoc = await FirebaseFirestore.instance
+          .collection('daily_progress')
+          .doc('${user!.uid}_$today')
+          .get();
+
+      setState(() {
+        quizzesCompletedToday = quizSnapshot.docs.length;
+
+        if (signProgressDoc.exists) {
+          final data = signProgressDoc.data() as Map<String, dynamic>;
+          signsLearnedToday = data['signsLearned'] ?? 0;
+          practiceMinutesToday = data['practiceMinutes'] ?? 0;
+        }
+      });
+    } catch (e) {
+      print('Error fetching today progress: $e');
+    } finally {
+      setState(() {
+        isLoadingProgress = false;
+      });
+    }
+  }
+
+  Future<void> _fetchRecentActivities() async {
+    if (user == null) {
+      setState(() {
+        isLoadingActivities = false;
+      });
+      return;
+    }
+
+    try {
+      // Fetch recent activities from activities collection
+      final activitiesSnapshot = await FirebaseFirestore.instance
+          .collection('activities')
+          .where('userId', isEqualTo: user!.uid)
+          .orderBy('timestamp', descending: true)
+          .limit(10)
+          .get();
+
+      List<Map<String, dynamic>> activities = [];
+
+      for (var doc in activitiesSnapshot.docs) {
+        final data = doc.data();
+        final timestamp = data['timestamp'] as Timestamp?;
+        final timeAgo = timestamp != null
+            ? _getTimeAgo(timestamp.toDate())
+            : 'Recently';
+
+        // Determine icon and color based on activity type
+        IconData icon = Icons.info;
+        Color color = Colors.grey;
+
+        switch (data['type']) {
+          case 'quiz_completed':
+            icon = Icons.quiz;
+            color = Colors.blue;
+            break;
+          case 'sign_learned':
+          case 'signs_learned':
+            icon = Icons.sign_language;
+            color = Colors.green;
+            break;
+          case 'goals_set':
+            icon = Icons.flag;
+            color = Colors.purple;
+            break;
+          case 'practice_session':
+            icon = Icons.timer;
+            color = Colors.orange;
+            break;
+        }
+
+        activities.add({
+          'title': data['title'] as String? ?? 'Activity',
+          'subtitle': data['subtitle'] as String? ?? '',
+          'time': timeAgo,
+          'icon': icon,
+          'color': color,
+          'timestamp': timestamp?.toDate() ?? DateTime.now(),
+        });
+      }
+
+      // If no activities found, add a welcome message
+      if (activities.isEmpty) {
+        activities.add({
+          'title': 'Welcome!',
+          'subtitle': 'Start your sign language journey',
+          'time': 'Just now',
+          'icon': Icons.waving_hand,
+          'color': Colors.purple,
+          'timestamp': DateTime.now(),
+        });
+      }
+
+      setState(() {
+        recentActivities = activities.take(5).toList();
+      });
+    } catch (e) {
+      print('Error fetching recent activities: $e');
+      // Fallback to some default activities
+      setState(() {
+        recentActivities = [
+          {
+            'title': 'Welcome!',
+            'subtitle': 'Start your sign language journey',
+            'time': 'Just now',
+            'icon': Icons.waving_hand,
+            'color': Colors.purple,
+            'timestamp': DateTime.now(),
+          },
+        ];
+      });
+    } finally {
+      setState(() {
+        isLoadingActivities = false;
+      });
+    }
+  }
+
+  String _getTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,10 +303,21 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.blue, Colors.blueAccent],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,9 +328,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Welcome back,',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               color: Colors.white70,
                             ),
@@ -59,13 +345,13 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
-                      CircleAvatar(
-                        radius: 25,
+                      const CircleAvatar(
+                        radius: 28,
                         backgroundColor: Colors.white24,
                         child: Icon(
                           Icons.waving_hand,
                           color: Colors.white,
-                          size: 30,
+                          size: 32,
                         ),
                       ),
                     ],
@@ -83,20 +369,13 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
 
-            // Quick Actions
+            // Content Sections
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Quick Actions',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Quick Actions'),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -107,7 +386,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.camera_alt,
                           Colors.green,
                           () {
-                            // Navigate to camera tab
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -121,15 +399,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionCard(
-                          'Practice',
-                          'Learn new signs',
+                          'Quizzes',
+                          'Learn and test your skills',
                           Icons.school,
                           Colors.orange,
                           () {
-                            // TODO: Navigate to practice section
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Practice Mode - Coming Soon!'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const QuizSelectorPage(),
                               ),
                             );
                           },
@@ -147,10 +425,11 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.book,
                           Colors.purple,
                           () {
-                            // TODO: Navigate to dictionary
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('ASL Dictionary - Coming Soon!'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SignDictionaryPage(),
                               ),
                             );
                           },
@@ -159,15 +438,60 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionCard(
-                          'Games',
-                          'Fun learning activities',
-                          Icons.games,
-                          Colors.red,
+                          'Practice New Sign',
+                          'Learn sign language basics',
+                          Icons.sign_language,
+                          Colors.teal,
                           () {
-                            // TODO: Navigate to games
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Games - Coming Soon!'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SignLearningPage(
+                                  onSignLearned: updateSignLearningProgress,
+                                  onPracticeTimeUpdated: updatePracticeTime,
+                                ),
+                              ),
+                            ).then((_) {
+                              // Refresh progress when returning from sign learning page
+                              _fetchTodayProgress();
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          'Set Goals',
+                          'Plan your daily learning',
+                          Icons.flag,
+                          Colors.indigo,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const GoalSettingPage(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          'Leaderboard',
+                          'See your ranking',
+                          Icons.leaderboard,
+                          Colors.amber,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LeaderboardPage(),
                               ),
                             );
                           },
@@ -177,58 +501,22 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   const SizedBox(height: 30),
-
-                  // Progress Section
-                  const Text(
-                    'Your Progress',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Today\'s Goals'),
                   const SizedBox(height: 16),
-                  _buildProgressCard(),
+                  _buildTodaysGoalsCard(),
 
                   const SizedBox(height: 30),
-
-                  // Daily Goal
-                  const Text(
-                    'Today\'s Goal',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Your Quiz Stats'),
                   const SizedBox(height: 16),
-                  _buildDailyGoalCard(),
+                  _buildUserStatsCard(),
 
                   const SizedBox(height: 30),
-
-                  // Recent Activities
-                  const Text(
-                    'Recent Activities',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Recent Activities'),
                   const SizedBox(height: 16),
                   _buildRecentActivity(),
 
                   const SizedBox(height: 30),
-
-                  // Featured Lesson
-                  const Text(
-                    'Featured Lesson',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Featured Lesson'),
                   const SizedBox(height: 16),
                   _buildFeaturedLesson(),
                 ],
@@ -236,6 +524,17 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4facfe),
       ),
     );
   }
@@ -248,18 +547,18 @@ class _DashboardPageState extends State<DashboardPage> {
     VoidCallback onTap,
   ) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           child: Column(
             children: [
               CircleAvatar(
-                radius: 25,
-                backgroundColor: color.withOpacity(0.1),
+                radius: 28,
+                backgroundColor: color.withOpacity(0.12),
                 child: Icon(icon, color: color, size: 28),
               ),
               const SizedBox(height: 12),
@@ -271,7 +570,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 subtitle,
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -284,188 +583,71 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildProgressCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Learning Progress',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Level 3',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                _buildProgressItem('Signs Learned', '89/200', 0.445),
-                const SizedBox(width: 20),
-                _buildProgressItem('Lessons Completed', '12/50', 0.24),
-              ],
-            ),
-            const SizedBox(height: 20),
-            LinearProgressIndicator(
-              value: 0.32,
-              backgroundColor: Colors.grey[300],
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '32% to next level',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressItem(String title, String value, double progress) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.grey[300],
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDailyGoalCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            const Icon(Icons.track_changes, size: 40, color: Colors.orange),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Practice 5 new signs',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Keep your learning streak alive!',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.local_fire_department,
-                        color: Colors.orange,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        '7 day streak',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                '3/5',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildRecentActivity() {
+    if (isLoadingActivities) {
+      return Card(
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: const Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (recentActivities.isEmpty) {
+      return Card(
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: const Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.history, size: 48, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'No recent activities yet',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Start learning to see your progress!',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          children: [
-            _buildActivityItem(
-              'Completed "Greetings" lesson',
-              '2 hours ago',
-              Icons.check_circle,
-              Colors.green,
-            ),
-            const Divider(),
-            _buildActivityItem(
-              'Practiced 8 new signs',
-              '5 hours ago',
-              Icons.access_time,
-              Colors.blue,
-            ),
-            const Divider(),
-            _buildActivityItem(
-              'Achieved 95% accuracy in quiz',
-              '1 day ago',
-              Icons.emoji_events,
-              Colors.orange,
-            ),
-          ],
+          children: recentActivities.asMap().entries.map((entry) {
+            final index = entry.key;
+            final activity = entry.value;
+            final widget = _buildActivityItem(
+              activity['title'] as String,
+              activity['time'] as String,
+              activity['icon'] as IconData,
+              activity['color'] as Color,
+            );
+
+            // Add divider between items (except for the last one)
+            if (index < recentActivities.length - 1) {
+              return Column(children: [widget, const Divider()]);
+            }
+            return widget;
+          }).toList(),
         ),
       ),
     );
@@ -509,16 +691,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildFeaturedLesson() {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to featured lesson
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Featured Lesson - Coming Soon!')),
           );
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(
@@ -556,11 +737,15 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star_half, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(
+                          Icons.star_half,
+                          color: Colors.amber,
+                          size: 16,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           '4.5',
@@ -577,5 +762,440 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildUserStatsCard() {
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Quiz Performance',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getPerformanceColor().withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _getPerformanceText(),
+                    style: TextStyle(
+                      color: _getPerformanceColor(),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem(
+                  'Quizzes\nTaken',
+                  isLoadingStats ? '...' : '$quizzesTaken',
+                  Colors.blue,
+                ),
+                _buildStatItem(
+                  'Average\nScore',
+                  isLoadingStats
+                      ? '...'
+                      : '${averageScore.toStringAsFixed(1)}%',
+                  Colors.green,
+                ),
+                _buildStatItem(
+                  'Best\nScore',
+                  isLoadingStats ? '...' : '$bestScore%',
+                  Colors.orange,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  String _getPerformanceText() {
+    if (isLoadingStats) return 'Loading...';
+    if (quizzesTaken == 0) return 'Start Learning!';
+    if (averageScore >= 90) return 'Excellent!';
+    if (averageScore >= 80) return 'Great!';
+    if (averageScore >= 70) return 'Good!';
+    if (averageScore >= 60) return 'Keep Going!';
+    return 'Practice More!';
+  }
+
+  Color _getPerformanceColor() {
+    if (isLoadingStats || quizzesTaken == 0) return Colors.grey;
+    if (averageScore >= 90) return Colors.purple;
+    if (averageScore >= 80) return Colors.green;
+    if (averageScore >= 70) return Colors.blue;
+    if (averageScore >= 60) return Colors.orange;
+    return Colors.red;
+  }
+
+  Widget _buildTodaysGoalsCard() {
+    if (isLoadingGoals || isLoadingProgress) {
+      return Card(
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: const Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Today\'s Progress',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getOverallProgressColor().withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _getOverallProgressText(),
+                    style: TextStyle(
+                      color: _getOverallProgressColor(),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildGoalProgressItem(
+                  'Signs Learned',
+                  signsLearnedToday,
+                  dailySignGoal,
+                  Icons.sign_language,
+                  Colors.teal,
+                ),
+                _buildGoalProgressItem(
+                  'Practice Time',
+                  practiceMinutesToday,
+                  dailyPracticeMinutes,
+                  Icons.timer,
+                  Colors.orange,
+                ),
+                _buildGoalProgressItem(
+                  'Quizzes Done',
+                  quizzesCompletedToday,
+                  dailyQuizGoal,
+                  Icons.quiz,
+                  Colors.purple,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            LinearProgressIndicator(
+              value: _getOverallProgressValue(),
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _getOverallProgressColor(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${(_getOverallProgressValue() * 100).toStringAsFixed(0)}% of today\'s goals completed',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalProgressItem(
+    String label,
+    int current,
+    int target,
+    IconData icon,
+    Color color,
+  ) {
+    final progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+    final isCompleted = current >= target;
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '$current/$target',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isCompleted ? color : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 40,
+          height: 4,
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.grey[300],
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _getOverallProgressValue() {
+    if (dailySignGoal == 0 && dailyPracticeMinutes == 0 && dailyQuizGoal == 0) {
+      return 0.0;
+    }
+
+    final signProgress = dailySignGoal > 0
+        ? (signsLearnedToday / dailySignGoal).clamp(0.0, 1.0)
+        : 0.0;
+    final practiceProgress = dailyPracticeMinutes > 0
+        ? (practiceMinutesToday / dailyPracticeMinutes).clamp(0.0, 1.0)
+        : 0.0;
+    final quizProgress = dailyQuizGoal > 0
+        ? (quizzesCompletedToday / dailyQuizGoal).clamp(0.0, 1.0)
+        : 0.0;
+
+    final totalProgress = (signProgress + practiceProgress + quizProgress) / 3;
+    return totalProgress.clamp(0.0, 1.0);
+  }
+
+  String _getOverallProgressText() {
+    final progress = _getOverallProgressValue();
+    if (progress >= 1.0) return 'Completed! 🎉';
+    if (progress >= 0.8) return 'Almost there!';
+    if (progress >= 0.5) return 'Good progress';
+    if (progress >= 0.2) return 'Keep going!';
+    return 'Just started';
+  }
+
+  Color _getOverallProgressColor() {
+    final progress = _getOverallProgressValue();
+    if (progress >= 1.0) return Colors.green;
+    if (progress >= 0.8) return Colors.blue;
+    if (progress >= 0.5) return Colors.orange;
+    if (progress >= 0.2) return Colors.amber;
+    return Colors.grey;
+  }
+
+  // Progress update methods
+  void updateSignLearningProgress(int signsLearned) {
+    _updateSignLearningProgress(signsLearned);
+  }
+
+  void updatePracticeTime(int minutes) {
+    _updatePracticeTime(minutes);
+  }
+
+  Future<void> _updateSignLearningProgress(int signsLearned) async {
+    if (user == null) return;
+
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    final docRef = FirebaseFirestore.instance
+        .collection('daily_progress')
+        .doc('${user!.uid}_$today');
+
+    try {
+      final doc = await docRef.get();
+      int currentSigns = 0;
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        currentSigns = data['signsLearned'] ?? 0;
+      }
+
+      await docRef.set({
+        'signsLearned': currentSigns + signsLearned,
+        'lastUpdated': FieldValue.serverTimestamp(),
+        'date': today,
+      }, SetOptions(merge: true));
+
+      // Refresh progress
+      await _fetchTodayProgress();
+    } catch (e) {
+      print('Error updating sign learning progress: $e');
+    }
+  }
+
+  Future<void> _updatePracticeTime(int minutes) async {
+    if (user == null) return;
+
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    final docRef = FirebaseFirestore.instance
+        .collection('daily_progress')
+        .doc('${user!.uid}_$today');
+
+    try {
+      final doc = await docRef.get();
+      int currentMinutes = 0;
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        currentMinutes = data['practiceMinutes'] ?? 0;
+      }
+
+      await docRef.set({
+        'practiceMinutes': currentMinutes + minutes,
+        'lastUpdated': FieldValue.serverTimestamp(),
+        'date': today,
+      }, SetOptions(merge: true));
+
+      // Refresh progress
+      await _fetchTodayProgress();
+    } catch (e) {
+      print('Error updating practice time: $e');
+    }
+  }
+
+  // Activity logging methods
+  void logQuizActivity(String quizTitle, int score, int percentage) {
+    _logQuizActivity(quizTitle, score, percentage);
+  }
+
+  void logSignLearningActivity(int signsLearned) {
+    _logSignLearningActivity(signsLearned);
+  }
+
+  void logGoalSettingActivity() {
+    _logGoalSettingActivity();
+  }
+
+  Future<void> _logQuizActivity(
+    String quizTitle,
+    int score,
+    int percentage,
+  ) async {
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('activities').add({
+        'userId': user!.uid,
+        'type': 'quiz_completed',
+        'title': 'Completed quiz: $quizTitle',
+        'subtitle': 'Scored $percentage%',
+        'timestamp': FieldValue.serverTimestamp(),
+        'data': {
+          'quizTitle': quizTitle,
+          'score': score,
+          'percentage': percentage,
+        },
+      });
+
+      // Refresh activities
+      await _fetchRecentActivities();
+    } catch (e) {
+      print('Error logging quiz activity: $e');
+    }
+  }
+
+  Future<void> _logSignLearningActivity(int signsLearned) async {
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('activities').add({
+        'userId': user!.uid,
+        'type': 'signs_learned',
+        'title': 'Learned $signsLearned new signs',
+        'subtitle': 'Sign language practice',
+        'timestamp': FieldValue.serverTimestamp(),
+        'data': {'signsLearned': signsLearned},
+      });
+
+      // Refresh activities
+      await _fetchRecentActivities();
+    } catch (e) {
+      print('Error logging sign learning activity: $e');
+    }
+  }
+
+  Future<void> _logGoalSettingActivity() async {
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('activities').add({
+        'userId': user!.uid,
+        'type': 'goals_set',
+        'title': 'Set daily learning goals',
+        'subtitle': 'Personalized learning targets',
+        'timestamp': FieldValue.serverTimestamp(),
+        'data': {},
+      });
+
+      // Refresh activities
+      await _fetchRecentActivities();
+    } catch (e) {
+      print('Error logging goal setting activity: $e');
+    }
   }
 }

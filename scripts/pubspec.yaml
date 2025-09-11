@@ -1,0 +1,10 @@
+name: quiz_upload_script
+description: Script to upload quiz questions to Firestore
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  cloud_firestore: ^4.17.3
+  firebase_core: ^2.32.0
