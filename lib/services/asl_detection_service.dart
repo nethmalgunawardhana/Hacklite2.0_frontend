@@ -2,6 +2,9 @@ import 'package:flutter/services.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:camera/camera.dart';
 import '../utils/hand_landmark_processor.dart';
+import '../utils/camera_stream_processor.dart';
+import '../utils/gesture_stabilizer.dart';
+import '../utils/word_recognizer.dart';
 import '../models/asl_prediction.dart';
 
 class ASLDetectionService {
@@ -15,28 +18,37 @@ class ASLDetectionService {
 
   PoseDetector? _poseDetector;
   HandLandmarkProcessor? _landmarkProcessor;
+  CameraStreamProcessor? _streamProcessor;
+  GestureStabilizer? _gestureStabilizer;
+  WordRecognizer? _wordRecognizer;
   List<String> _labels = [];
   bool _isInitialized = false;
-  bool _useMockDetection = false; // Flag to switch between real and mock
+  bool _useStreamProcessing = false; // Flag for Phase 3 stream processing
 
   // Configuration
   static const String labelsPath = 'assets/models/labels.txt';
   static const double confidenceThreshold = 0.6;
 
-  /// Initialize the ASL detection service
-  Future<bool> initialize({bool useMockDetection = false}) async {
+  /// Initialize the ASL detection service with ML Kit only
+  Future<bool> initialize({bool useStreamProcessing = false}) async {
     if (_isInitialized) return true;
 
     try {
-      _useMockDetection = useMockDetection;
+      _useStreamProcessing = useStreamProcessing;
 
-      if (!_useMockDetection) {
-        // Initialize real ML Kit pose detector
-        _poseDetector = PoseDetector(
-          options: PoseDetectorOptions(mode: PoseDetectionMode.stream),
-        );
-        _landmarkProcessor = HandLandmarkProcessor();
-        print('✅ ML Kit pose detector initialized');
+      // Always initialize ML Kit pose detector (no mock mode)
+      _poseDetector = PoseDetector(
+        options: PoseDetectorOptions(mode: PoseDetectionMode.stream),
+      );
+      _landmarkProcessor = HandLandmarkProcessor();
+      print('✅ ML Kit pose detector initialized');
+
+      // Initialize Phase 3 components if enabled
+      if (_useStreamProcessing) {
+        _streamProcessor = CameraStreamProcessor();
+        _gestureStabilizer = GestureStabilizer();
+        _wordRecognizer = WordRecognizer();
+        print('✅ Phase 3 components initialized');
       }
 
       // Try to load labels (optional for now)
@@ -54,8 +66,10 @@ class ASLDetectionService {
       }
 
       _isInitialized = true;
-      final mode = _useMockDetection ? 'Mock' : 'ML Kit';
-      print('✅ ASL Detection Service initialized successfully ($mode mode)');
+      final phase = _useStreamProcessing ? ' (Phase 3)' : '';
+      print(
+        '✅ ASL Detection Service initialized successfully (ML Kit mode$phase)',
+      );
       return true;
     } catch (e) {
       print('❌ Error initializing ASL Detection Service: $e');
@@ -72,45 +86,33 @@ class ASLDetectionService {
     }
 
     try {
-      if (_useMockDetection || cameraImage == null) {
-        // Use mock detection
-        return _generateMockPrediction();
-      } else {
-        // Use real ML Kit detection
-        return await _detectFromCameraImage(cameraImage);
+      if (cameraImage == null) {
+        print('❌ No camera image provided for detection');
+        return null;
       }
+
+      // Use real ML Kit detection only
+      return await _detectFromCameraImage(cameraImage);
     } catch (e) {
-      print('Error detecting gesture from camera: $e');
-      return _generateMockPrediction(); // Fallback to mock
+      print('❌ Error detecting gesture from camera: $e');
+      return null;
     }
-  }
-
-  /// Generate mock prediction for testing
-  ASLPrediction _generateMockPrediction() {
-    final mockLetters = ['A', 'B', 'C', 'D', 'L', 'V', 'Y'];
-    final randomLetter =
-        mockLetters[DateTime.now().millisecond % mockLetters.length];
-
-    return ASLPrediction(
-      letter: randomLetter,
-      confidence:
-          0.75 +
-          (DateTime.now().millisecond % 25) / 100, // Mock confidence 0.75-1.0
-      timestamp: DateTime.now(),
-      landmarks: [], // Empty landmarks for mock
-    );
   }
 
   /// Detect from camera image using ML Kit
   Future<ASLPrediction?> _detectFromCameraImage(CameraImage cameraImage) async {
     if (_poseDetector == null || _landmarkProcessor == null) {
-      return _generateMockPrediction();
+      print('❌ ML Kit components not initialized');
+      return null;
     }
 
     try {
       // Convert camera image to InputImage
       final inputImage = _convertCameraImageToInputImage(cameraImage);
-      if (inputImage == null) return _generateMockPrediction();
+      if (inputImage == null) {
+        print('❌ Failed to convert camera image to InputImage');
+        return null;
+      }
 
       // Detect poses
       final poses = await _poseDetector!.processImage(inputImage);
@@ -128,8 +130,8 @@ class ASLDetectionService {
       // Recognize gesture from landmarks
       return _landmarkProcessor!.recognizeGesture(handLandmarks);
     } catch (e) {
-      print('Error in ML Kit detection: $e');
-      return _generateMockPrediction(); // Fallback to mock
+      print('❌ Error in ML Kit detection: $e');
+      return null;
     }
   }
 
@@ -165,28 +167,24 @@ class ASLDetectionService {
     }
   }
 
-  /// Detect ASL gesture from image path (mock implementation)
+  /// Detect ASL gesture from image path - Real ML Kit implementation
   Future<ASLPrediction?> detectFromImagePath(String imagePath) async {
     if (!_isInitialized) {
       await initialize();
     }
 
     try {
-      // Mock detection - return a random letter for testing
-      await Future.delayed(Duration(milliseconds: 500)); // Simulate processing
+      if (imagePath.isEmpty) {
+        print('⚠️ No image path provided');
+        return null;
+      }
 
-      final mockLetters = ['A', 'B', 'C', 'D', 'L', 'V', 'Y'];
-      final randomLetter =
-          mockLetters[DateTime.now().millisecond % mockLetters.length];
-
-      return ASLPrediction(
-        letter: randomLetter,
-        confidence: 0.85, // Mock confidence
-        timestamp: DateTime.now(),
-        landmarks: [], // Empty landmarks for mock
-      );
+      // For file-based detection, would need to load image and process
+      // Currently not implemented - return null for honest behavior
+      print('⚠️ Image path detection not yet implemented');
+      return null;
     } catch (e) {
-      print('Error processing image from path: $e');
+      print('❌ Error processing image from path: $e');
       return null;
     }
   }
@@ -206,8 +204,95 @@ class ASLDetectionService {
   /// Get available gesture labels
   List<String> get availableGestures => List.from(_labels);
 
+  /// Phase 3: Advanced ASL detection with stream processing and stabilization
+  Future<ASLPrediction?> detectWithAdvancedProcessing(CameraImage image) async {
+    if (!_isInitialized || !_useStreamProcessing) {
+      throw Exception('Phase 3 components not initialized');
+    }
+
+    try {
+      // Skip frame-based throttling logic for now (handled by stream processor separately)
+
+      // Process with normal detection
+      final prediction = await detectGestureFromCamera();
+      if (prediction == null) return null;
+
+      // Apply gesture stabilization to reduce jitter
+      final stabilizedPrediction = _gestureStabilizer!.addPrediction(
+        prediction,
+      );
+      if (stabilizedPrediction == null) {
+        return null; // Prediction not stable enough yet
+      }
+
+      // Add letter to word recognizer for word detection
+      _wordRecognizer!.addLetter(stabilizedPrediction.letter);
+
+      // Create enhanced prediction with additional Phase 3 information
+      return stabilizedPrediction;
+    } catch (e) {
+      print('❌ Error in advanced ASL detection: $e');
+      return null;
+    }
+  }
+
+  /// Get current word recognition progress
+  String getCurrentWordProgress() {
+    return _wordRecognizer?.currentWord ?? '';
+  }
+
+  /// Get current sequence being typed
+  String getCurrentSequence() {
+    return _wordRecognizer?.currentSequence ?? '';
+  }
+
+  /// Get recognized words
+  List<String> getRecognizedWords() {
+    return _wordRecognizer?.recognizedWords ?? [];
+  }
+
+  /// Reset word recognition state
+  void resetWordRecognizer() {
+    _wordRecognizer?.reset();
+  }
+
+  /// Get gesture stabilization metrics
+  Map<String, dynamic> getStabilizationMetrics() {
+    if (_gestureStabilizer == null) return {};
+    return {
+      'stabilityRate': _gestureStabilizer!.stabilityRate,
+      'averageConfidence': _gestureStabilizer!.averageConfidence,
+      'predictionHistory': _gestureStabilizer!.history.length,
+      'isStable': _gestureStabilizer!.isStable,
+    };
+  }
+
+  /// Check if stream processing is enabled
+  bool get isStreamProcessingEnabled => _useStreamProcessing;
+
   /// Check if service is initialized
   bool get isInitialized => _isInitialized;
+
+  /// Start stream processing (Phase 3)
+  Future<void> startStreamProcessing(CameraController controller) async {
+    if (!_useStreamProcessing || _streamProcessor == null) {
+      throw Exception(
+        'Stream processing not enabled or components not initialized',
+      );
+    }
+
+    await _streamProcessor!.initialize();
+    await _streamProcessor!.startProcessing(controller);
+    print('🎥 Phase 3 stream processing started');
+  }
+
+  /// Stop stream processing (Phase 3)
+  Future<void> stopStreamProcessing(CameraController controller) async {
+    if (_streamProcessor != null) {
+      await _streamProcessor!.stopProcessing(controller);
+      print('⏹️ Phase 3 stream processing stopped');
+    }
+  }
 
   /// Check if ML model is available
   bool get hasMLModel => _poseDetector != null;

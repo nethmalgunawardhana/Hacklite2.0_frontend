@@ -25,12 +25,13 @@ class _CameraPageState extends State<CameraPage> {
   // ASL Detection variables
   late ASLDetectionService _aslService;
   bool _isDetecting = false;
-  bool _useMLDetection = false; // Toggle between mock and real ML detection
+  // Using ML detection only (no toggle)
   String _currentPrediction = "";
   double _currentConfidence = 0.0;
   List<ASLPrediction> _detectionHistory = [];
   Timer? _detectionTimer;
   String _detectedSentence = "";
+  CameraImage? _currentCameraImage; // Store current camera frame
 
   @override
   void initState() {
@@ -42,13 +43,10 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<void> _initializeASLService() async {
     try {
-      final success = await _aslService.initialize(
-        useMockDetection: !_useMLDetection,
-      );
+      final success = await _aslService.initialize();
       if (success) {
         setState(() {
-          final mode = _useMLDetection ? "ML Kit" : "Mock";
-          _statusText = "ASL detection service initialized ($mode mode).";
+          _statusText = "ASL detection service initialized (ML Kit mode).";
         });
       } else {
         setState(() {
@@ -161,6 +159,11 @@ class _CameraPageState extends State<CameraPage> {
       _detectedSentence = "";
     });
 
+    // Start camera image stream for real-time detection
+    _controller!.startImageStream((CameraImage image) {
+      _currentCameraImage = image;
+    });
+
     _detectionTimer = Timer.periodic(
       const Duration(milliseconds: 1500), // Process every 1.5 seconds
       (timer) => _processGesture(),
@@ -175,6 +178,12 @@ class _CameraPageState extends State<CameraPage> {
     });
     _detectionTimer?.cancel();
     _detectionTimer = null;
+
+    // Stop camera image stream
+    if (_controller != null) {
+      _controller!.stopImageStream();
+    }
+    _currentCameraImage = null;
   }
 
   Future<void> _processGesture() async {
@@ -183,20 +192,23 @@ class _CameraPageState extends State<CameraPage> {
     try {
       ASLPrediction? prediction;
 
-      if (_useMLDetection && _controller != null) {
-        // For ML detection, try to get camera image
+      if (_controller != null && _currentCameraImage != null) {
+        // Use real ML Kit detection with actual camera image
         try {
-          await _controller!.takePicture();
-          // Note: For real-time detection, we'd need to use camera stream
-          // For now, use mock mode when ML is enabled but image capture fails
-          prediction = await _aslService.detectGestureFromCamera();
+          prediction = await _aslService.detectGestureFromCamera(
+            cameraImage: _currentCameraImage,
+          );
         } catch (e) {
-          print('Camera image capture failed, using mock: $e');
-          prediction = await _aslService.detectGestureFromCamera();
+          print('❌ ML Kit detection failed: $e');
+          setState(() {
+            _translationText = "❌ Detection error. Please try again.";
+          });
+          return;
         }
       } else {
-        // Use mock detection
-        prediction = await _aslService.detectGestureFromCamera();
+        // No camera image available
+        print('⚠️ No camera image available for detection');
+        return;
       }
 
       if (prediction != null && prediction.isHighConfidence) {
@@ -243,7 +255,6 @@ class _CameraPageState extends State<CameraPage> {
           builder: (context, constraints) {
             final height = constraints.maxHeight;
             final cameraHeight = height * 0.6; // 60% for camera preview
-            final bottomHeight = height - cameraHeight;
 
             return SingleChildScrollView(
               child: ConstrainedBox(
@@ -363,56 +374,6 @@ class _CameraPageState extends State<CameraPage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-
-                          // Detection Mode Toggle
-                          Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Detection Mode:',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Switch(
-                                        value: _useMLDetection,
-                                        onChanged: _isDetecting
-                                            ? null
-                                            : (value) async {
-                                                setState(() {
-                                                  _useMLDetection = value;
-                                                });
-                                                await _initializeASLService();
-                                              },
-                                        activeColor: Colors.blue,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _useMLDetection
-                                        ? 'Real ML Kit Hand Detection (Advanced)'
-                                        : 'Mock Detection (Demo Mode)',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: _useMLDetection
-                                          ? Colors.blue
-                                          : Colors.grey[600],
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 16),
 
                           Row(
