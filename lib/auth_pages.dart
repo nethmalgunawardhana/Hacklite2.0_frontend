@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -45,10 +47,22 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+
+      // Update last login timestamp in Firestore
+      if (userCredential.user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .update({
+              'lastLogin': FieldValue.serverTimestamp(),
+              'isActive': true,
+            });
+      }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +122,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   children: [
                     const SizedBox(height: 40),
 
-                    // App Logo/Image
+
                     TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: 1),
                       duration: const Duration(milliseconds: 1500),
@@ -596,6 +610,7 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
@@ -631,9 +646,31 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      // Create user account
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+
+      // Save user details to Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+            'uid': userCredential.user!.uid,
+            'email': _emailController.text.trim(),
+            'username': _usernameController.text.trim(),
+            'name': _usernameController.text
+                .trim(), // Use username as display name initially
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastLogin': FieldValue.serverTimestamp(),
+            'isActive': true,
+          });
+
+      // Update Firebase Auth display name
+      await userCredential.user!.updateDisplayName(
+        _usernameController.text.trim(),
       );
 
       // Sign out immediately after account creation to prevent auto-login
@@ -641,6 +678,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
 
       // Clear form fields
       _emailController.clear();
+      _usernameController.clear();
       _passwordController.clear();
       _confirmPasswordController.clear();
 
@@ -684,6 +722,27 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 8),
                 Expanded(child: Text(e.message ?? 'An error occurred')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('Failed to create account. Please try again.'),
+                ),
               ],
             ),
             backgroundColor: Colors.red,
@@ -879,6 +938,29 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                             ),
                             const SizedBox(height: 20),
 
+                            // Username Field
+                            _buildEnhancedTextField(
+                              controller: _usernameController,
+                              labelText: 'Username',
+                              hintText: 'Choose a username',
+                              prefixIcon: Icons.person_outline,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a username';
+                                }
+                                if (value.length < 3) {
+                                  return 'Username must be at least 3 characters';
+                                }
+                                if (!RegExp(
+                                  r'^[a-zA-Z0-9_]+$',
+                                ).hasMatch(value)) {
+                                  return 'Username can only contain letters, numbers, and underscores';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
                             // Password Field
                             _buildEnhancedTextField(
                               controller: _passwordController,
@@ -942,9 +1024,9 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 32),
-
-                            // Enhanced Sign Up Button
+                            const SizedBox(
+                              height: 32,
+                            ), // Enhanced Sign Up Button
                             _buildEnhancedButton(
                               onPressed: _isLoading ? null : _signUp,
                               isLoading: _isLoading,
@@ -1206,6 +1288,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _animationController.dispose();
