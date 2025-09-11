@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'quiz_selector_page.dart';
 import 'leaderboard_page.dart';
 
@@ -12,6 +13,68 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final User? user = FirebaseAuth.instance.currentUser;
+
+  // User stats
+  int quizzesTaken = 0;
+  double averageScore = 0.0;
+  int bestScore = 0;
+  bool isLoadingStats = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserStats();
+  }
+
+  Future<void> _fetchUserStats() async {
+    if (user == null) {
+      setState(() {
+        isLoadingStats = false;
+      });
+      return;
+    }
+
+    try {
+      // Fetch user's quiz scores from leaderboard collection
+      final snapshot = await FirebaseFirestore.instance
+          .collection('leaderboard')
+          .where('userId', isEqualTo: user!.uid)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        setState(() {
+          isLoadingStats = false;
+        });
+        return;
+      }
+
+      int totalScore = 0;
+      int maxScore = 0;
+      int totalQuizzes = snapshot.docs.length;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final percentage = data['percentage'] as int? ?? 0;
+        totalScore += percentage;
+        if (percentage > maxScore) {
+          maxScore = percentage;
+        }
+      }
+
+      setState(() {
+        quizzesTaken = totalQuizzes;
+        averageScore = totalQuizzes > 0 ? totalScore / totalQuizzes : 0.0;
+        bestScore = maxScore;
+        isLoadingStats = false;
+      });
+    } catch (e) {
+      print('Error fetching user stats: $e');
+      setState(() {
+        isLoadingStats = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -499,13 +562,13 @@ class _DashboardPageState extends State<DashboardPage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: _getPerformanceColor().withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'Great!',
+                  child: Text(
+                    _getPerformanceText(),
                     style: TextStyle(
-                      color: Colors.green,
+                      color: _getPerformanceColor(),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -516,9 +579,23 @@ class _DashboardPageState extends State<DashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Quizzes\nTaken', '12', Colors.blue),
-                _buildStatItem('Average\nScore', '85%', Colors.green),
-                _buildStatItem('Best\nScore', '95%', Colors.orange),
+                _buildStatItem(
+                  'Quizzes\nTaken',
+                  isLoadingStats ? '...' : '$quizzesTaken',
+                  Colors.blue,
+                ),
+                _buildStatItem(
+                  'Average\nScore',
+                  isLoadingStats
+                      ? '...'
+                      : '${averageScore.toStringAsFixed(1)}%',
+                  Colors.green,
+                ),
+                _buildStatItem(
+                  'Best\nScore',
+                  isLoadingStats ? '...' : '$bestScore%',
+                  Colors.orange,
+                ),
               ],
             ),
           ],
@@ -607,5 +684,24 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
     );
+  }
+
+  String _getPerformanceText() {
+    if (isLoadingStats) return 'Loading...';
+    if (quizzesTaken == 0) return 'Start Learning!';
+    if (averageScore >= 90) return 'Excellent!';
+    if (averageScore >= 80) return 'Great!';
+    if (averageScore >= 70) return 'Good!';
+    if (averageScore >= 60) return 'Keep Going!';
+    return 'Practice More!';
+  }
+
+  Color _getPerformanceColor() {
+    if (isLoadingStats || quizzesTaken == 0) return Colors.grey;
+    if (averageScore >= 90) return Colors.purple;
+    if (averageScore >= 80) return Colors.green;
+    if (averageScore >= 70) return Colors.blue;
+    if (averageScore >= 60) return Colors.orange;
+    return Colors.red;
   }
 }
