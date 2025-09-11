@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class QuizPage extends StatefulWidget {
   final String? quizId;
@@ -125,11 +126,48 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  void _showResults() {
-    // Score is already updated in real-time, just show results
+  void _showResults() async {
+    // Save score to Firestore before showing results
+    await _saveQuizScore();
     setState(() {
       showResults = true;
     });
+  }
+
+  Future<void> _saveQuizScore() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final quizScore = {
+        'userId': user.uid,
+        'userName': user.displayName ?? 'Anonymous User',
+        'userEmail': user.email ?? '',
+        'quizId': widget.quizId ?? 'general_quiz',
+        'quizTitle': widget.quizTitle ?? 'Practice Quiz',
+        'score': score,
+        'totalQuestions': questions.length,
+        'percentage': (score / questions.length * 100).round(),
+        'timestamp': FieldValue.serverTimestamp(),
+        'date': DateTime.now().toIso8601String().split(
+          'T',
+        )[0], // YYYY-MM-DD format
+      };
+
+      // Save to user's quiz scores collection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('quizScores')
+          .add(quizScore);
+
+      // Also save to global leaderboard collection
+      await FirebaseFirestore.instance.collection('leaderboard').add(quizScore);
+
+      print('Quiz score saved successfully');
+    } catch (e) {
+      print('Error saving quiz score: $e');
+    }
   }
 
   void _checkAnswer() {

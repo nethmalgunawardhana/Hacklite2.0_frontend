@@ -7,6 +7,7 @@ import 'dashboard_page.dart';
 import 'profile_page.dart';
 import 'history_page.dart';
 import 'camera_page.dart';
+import 'leaderboard_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,6 +80,7 @@ class _HomePageState extends State<HomePage> {
   static const List<Widget> _widgetOptions = <Widget>[
     DashboardPage(),
     CameraPage(),
+    LeaderboardPage(),
     ProfilePage(),
     HistoryPage(),
   ];
@@ -113,6 +115,10 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.camera_alt),
             label: 'Camera',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.leaderboard),
+            label: 'Leaderboard',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
