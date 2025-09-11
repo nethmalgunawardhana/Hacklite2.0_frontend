@@ -205,7 +205,8 @@ class _ProfilePageState extends State<ProfilePage>
                                         () => Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => const AboutPage(),
+                                            builder: (context) =>
+                                                const AboutPage(),
                                           ),
                                         ),
                                       ),
@@ -215,14 +216,21 @@ class _ProfilePageState extends State<ProfilePage>
                                 const SizedBox(height: 32),
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   child: ElevatedButton.icon(
                                     onPressed: () async {
                                       await FirebaseAuth.instance.signOut();
                                       // Optionally navigate to login page or let AuthWrapper handle it
-                                      Navigator.of(context).popUntil((route) => route.isFirst);
+                                      Navigator.of(
+                                        context,
+                                      ).popUntil((route) => route.isFirst);
                                     },
-                                    icon: const Icon(Icons.logout, color: Colors.white),
+                                    icon: const Icon(
+                                      Icons.logout,
+                                      color: Colors.white,
+                                    ),
                                     label: const Text(
                                       'Sign Out',
                                       style: TextStyle(
@@ -233,7 +241,9 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.redAccent,
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
