@@ -207,8 +207,6 @@ class _ProfilePageState extends State<ProfilePage>
                                   ),
                                 ),
                                 const SizedBox(height: 40),
-                                _buildLogoutButton(),
-                                const SizedBox(height: 40),
                               ],
                             ),
                           ),
@@ -281,9 +279,6 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 const SizedBox(height: 8),
-              
-               
-               
               ],
             ),
           ),
@@ -386,40 +381,6 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildLogoutButton() {
-    return Container(
-      width: double.infinity,
-      height: 60,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ElevatedButton.icon(
-        onPressed: () async => await FirebaseAuth.instance.signOut(),
-        icon: const Icon(Icons.logout, size: 24, color: Colors.white),
-        label: const Text(
-          'Sign Out',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showModernAboutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -449,7 +410,7 @@ class _ProfilePageState extends State<ProfilePage>
                     ),
                     borderRadius: BorderRadius.circular(50),
                   ),
-                  child: const Icon(   
+                  child: const Icon(
                     Icons.info_outline,
                     color: Colors.white,
                     size: 32,

@@ -120,210 +120,340 @@ class _GoalSettingPageState extends State<GoalSettingPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Daily Goals'),
-          backgroundColor: const Color(0xFF4facfe),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
-          ),
+        body: Stack(
+          children: [
+            const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+              ),
+            ),
+            // Back Button
+            Positioned(
+              top: 40,
+              left: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  padding: const EdgeInsets.all(12),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Goals'),
-        backgroundColor: const Color(0xFF4facfe),
-        actions: [
-          TextButton(
-            onPressed: isSaving ? null : _saveGoals,
-            child: isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.white, Color(0xFFF8F9FA)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 80,
+                bottom: 20,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                  )
-                : const Text(
-                    'Save',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text('🎯', style: TextStyle(fontSize: 32)),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Set Your Daily Goals',
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Stay motivated and track your progress!',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white70,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Color(0xFFF8F9FA)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '🎯 Set Your Daily Goals',
+
+                  const SizedBox(height: 32),
+
+                  // Section Title
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 16),
+                    child: Text(
+                      '📊 Daily Goals',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Color(0xFF4facfe),
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Stay motivated and track your progress!',
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+
+                  // Goal Settings
+                  _buildGoalCard(
+                    '📝 Signs to Learn',
+                    'Set how many new signs you want to learn today',
+                    Icons.sign_language,
+                    dailySignGoal,
+                    1,
+                    20,
+                    (value) => setState(() => dailySignGoal = value),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildGoalCard(
+                    '⏰ Practice Time',
+                    'Minutes of practice time per day',
+                    Icons.timer,
+                    dailyPracticeMinutes,
+                    5,
+                    120,
+                    (value) => setState(() => dailyPracticeMinutes = value),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildGoalCard(
+                    '🧠 Quiz Sessions',
+                    'Number of quiz sessions to complete',
+                    Icons.quiz,
+                    dailyQuizGoal,
+                    1,
+                    10,
+                    (value) => setState(() => dailyQuizGoal = value),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Section Title for Target Score
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 16),
+                    child: Text(
+                      '🎯 Performance Target',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4facfe),
+                      ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const SizedBox(height: 30),
+                  _buildScoreGoalCard(),
 
-              // Goal Settings
-              _buildGoalCard(
-                '📝 Signs to Learn',
-                'Set how many new signs you want to learn today',
-                Icons.sign_language,
-                dailySignGoal,
-                1,
-                20,
-                (value) => setState(() => dailySignGoal = value),
-              ),
+                  const SizedBox(height: 32),
 
-              const SizedBox(height: 20),
-
-              _buildGoalCard(
-                '⏰ Practice Time',
-                'Minutes of practice time per day',
-                Icons.timer,
-                dailyPracticeMinutes,
-                5,
-                120,
-                (value) => setState(() => dailyPracticeMinutes = value),
-              ),
-
-              const SizedBox(height: 20),
-
-              _buildGoalCard(
-                '🧠 Quiz Sessions',
-                'Number of quiz sessions to complete',
-                Icons.quiz,
-                dailyQuizGoal,
-                1,
-                10,
-                (value) => setState(() => dailyQuizGoal = value),
-              ),
-
-              const SizedBox(height: 20),
-
-              _buildScoreGoalCard(),
-
-              const SizedBox(height: 30),
-
-              // Motivation Section
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '💪 Stay Motivated!',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4facfe),
+                  // Motivation Section
+                  Card(
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          colors: [Colors.white, Color(0xFFF8F9FA)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                       ),
-                      const SizedBox(height: 15),
-                      _buildMotivationItem(
-                        'Consistency is key to mastering sign language',
-                        Icons.lightbulb,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildMotivationItem(
-                        'Small daily progress leads to big results',
-                        Icons.trending_up,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildMotivationItem(
-                        'Every sign you learn helps someone communicate',
-                        Icons.favorite,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: isSaving ? null : _saveGoals,
-                  icon: isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF4facfe,
+                                    ).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.lightbulb,
+                                    color: Color(0xFF4facfe),
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  '💪 Stay Motivated!',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF4facfe),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        )
-                      : const Icon(Icons.save),
-                  label: Text(isSaving ? 'Saving...' : 'Save Goals'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4facfe),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                            const SizedBox(height: 20),
+                            _buildMotivationItem(
+                              'Consistency is key to mastering sign language',
+                              Icons.lightbulb_outline,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildMotivationItem(
+                              'Small daily progress leads to big results',
+                              Icons.trending_up,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildMotivationItem(
+                              'Every sign you learn helps someone communicate',
+                              Icons.favorite_border,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+
+                  const SizedBox(height: 32),
+
+                  // Save Button
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4facfe).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: isSaving ? null : _saveGoals,
+                      icon: isSaving
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Icon(Icons.save, size: 24),
+                      label: Text(
+                        isSaving ? 'Saving Goals...' : '💾 Save My Goals',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4facfe),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          // Back Button
+          Positioned(
+            top: 40,
+            left: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                padding: const EdgeInsets.all(12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -338,83 +468,129 @@ class _GoalSettingPageState extends State<GoalSettingPage> {
     Function(int) onChanged,
   ) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4facfe).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+      elevation: 8,
+      shadowColor: const Color(0xFF4facfe).withOpacity(0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [Colors.white, Color(0xFFF8F9FA)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4facfe).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFF4facfe).withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(icon, color: const Color(0xFF4facfe), size: 28),
                   ),
-                  child: Icon(icon, color: const Color(0xFF4facfe), size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4facfe).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$currentValue',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4facfe),
                       ),
-                      Text(
-                        subtitle,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Text(
-                  '$currentValue',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4facfe),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Slider(
+                          value: currentValue.toDouble(),
+                          min: minValue.toDouble(),
+                          max: maxValue.toDouble(),
+                          divisions: maxValue - minValue,
+                          activeColor: const Color(0xFF4facfe),
+                          inactiveColor: Colors.grey[300],
+                          onChanged: (value) => onChanged(value.toInt()),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '$minValue',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                '$maxValue',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Slider(
-                    value: currentValue.toDouble(),
-                    min: minValue.toDouble(),
-                    max: maxValue.toDouble(),
-                    divisions: maxValue - minValue,
-                    activeColor: const Color(0xFF4facfe),
-                    inactiveColor: Colors.grey[300],
-                    onChanged: (value) => onChanged(value.toInt()),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$minValue',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-                Text(
-                  '$maxValue',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -422,101 +598,167 @@ class _GoalSettingPageState extends State<GoalSettingPage> {
 
   Widget _buildScoreGoalCard() {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4facfe).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+      elevation: 8,
+      shadowColor: const Color(0xFF4facfe).withOpacity(0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [Colors.white, Color(0xFFF8F9FA)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4facfe).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFF4facfe).withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.grade,
+                      color: Color(0xFF4facfe),
+                      size: 28,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.grade,
-                    color: Color(0xFF4facfe),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '🎯 Target Score',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '🎯 Target Score',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Minimum score to achieve in quizzes',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4facfe).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${targetScore.toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4facfe),
                       ),
-                      Text(
-                        'Minimum score to achieve in quizzes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Text(
-                  '${targetScore.toStringAsFixed(0)}%',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4facfe),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Slider(
+                          value: targetScore,
+                          min: 50.0,
+                          max: 100.0,
+                          divisions: 10,
+                          activeColor: const Color(0xFF4facfe),
+                          inactiveColor: Colors.grey[300],
+                          onChanged: (value) =>
+                              setState(() => targetScore = value),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '50%',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                '100%',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Slider(
-                    value: targetScore,
-                    min: 50.0,
-                    max: 100.0,
-                    divisions: 10,
-                    activeColor: const Color(0xFF4facfe),
-                    inactiveColor: Colors.grey[300],
-                    onChanged: (value) => setState(() => targetScore = value),
-                  ),
-                ),
-              ],
-            ),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('50%', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                Text(
-                  '100%',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildMotivationItem(String text, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, color: const Color(0xFF4facfe), size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4facfe).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFF4facfe), size: 18),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.black87,
+                height: 1.4,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

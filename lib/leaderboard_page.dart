@@ -99,54 +99,46 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Leaderboard'),
-        backgroundColor: const Color(0xFF4facfe),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: _changeTimeframe,
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
-                value: 'all',
-                child: Text('All Time'),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.white, Color(0xFFF8F9FA)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              const PopupMenuItem<String>(
-                value: 'month',
-                child: Text('This Month'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'week',
-                child: Text('This Week'),
-              ),
-            ],
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Text(
-                    selectedTimeframe == 'all'
-                        ? 'All Time'
-                        : selectedTimeframe == 'month'
-                        ? 'This Month'
-                        : 'This Week',
-                    style: const TextStyle(color: Colors.white),
+            ),
+            child: _buildContent(),
+          ),
+          // Back Button
+          Positioned(
+            top: 40,
+            left: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white),
                 ],
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                padding: const EdgeInsets.all(12),
               ),
             ),
           ),
         ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Color(0xFFF8F9FA)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: _buildContent(),
       ),
     );
   }
@@ -237,7 +229,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 80, bottom: 16),
       itemCount: leaderboardData.length,
       itemBuilder: (context, index) {
         final entry = leaderboardData[index];

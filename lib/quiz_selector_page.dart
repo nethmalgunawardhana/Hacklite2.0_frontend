@@ -70,37 +70,66 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Select Quiz'),
-          backgroundColor: const Color(0xFF4facfe),
-        ),
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, Color(0xFFF8F9FA)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+        body: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.white, Color(0xFFF8F9FA)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
-                SizedBox(height: 20),
-                Text(
-                  'Loading available quizzes...',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF4facfe),
-                    fontWeight: FontWeight.w500,
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF4facfe),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Loading available quizzes...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF4facfe),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Back Button
+            Positioned(
+              top: 40,
+              left: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 24,
                   ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  padding: const EdgeInsets.all(12),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       );
     }

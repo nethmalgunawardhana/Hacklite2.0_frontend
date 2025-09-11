@@ -205,313 +205,333 @@ class _SignLearningPageState extends State<SignLearningPage> {
         progressTracking[currentSign['name']] ?? 'Not Started';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Learn Signs'),
-        backgroundColor: const Color(0xFF4facfe),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Chip(
-              label: Text(
-                '${currentSignIndex + 1}/${signs.length}',
-                style: const TextStyle(color: Colors.white),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.white, Color(0xFFF8F9FA)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              backgroundColor: Colors.white24,
             ),
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Color(0xFFF8F9FA)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Sign Image Card
-              Card(
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // Sign Name
-                      Text(
-                        currentSign['name'],
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4facfe),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Difficulty Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getDifficultyColor(
-                            currentSign['difficulty'],
-                          ).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _getDifficultyColor(
-                              currentSign['difficulty'],
-                            ),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          currentSign['difficulty'],
-                          style: TextStyle(
-                            color: _getDifficultyColor(
-                              currentSign['difficulty'],
-                            ),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Sign Image
-                      Container(
-                        height: 250,
-                        width: 250,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: Image.asset(
-                            'images/${currentSign['image']}',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[200],
-                                child: const Icon(
-                                  Icons.image_not_supported,
-                                  size: 80,
-                                  color: Colors.grey,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Description
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4facfe).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          currentSign['description'],
-                          style: const TextStyle(
-                            fontSize: 16,
-                            height: 1.5,
-                            color: Color(0xFF2C3E50),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 80,
+                bottom: 20,
               ),
-
-              const SizedBox(height: 30),
-
-              // Progress Tracking
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Mark Your Progress',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4facfe),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Column(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Sign Image Card
+                  Card(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
                         children: [
-                          RadioListTile<String>(
-                            title: const Text('Not Started'),
-                            value: 'Not Started',
-                            groupValue: currentProgress,
-                            onChanged: (value) =>
-                                _saveProgress(currentSign['name'], value!),
-                            activeColor: const Color(0xFF4facfe),
+                          // Sign Name
+                          Text(
+                            currentSign['name'],
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4facfe),
+                            ),
                           ),
-                          RadioListTile<String>(
-                            title: const Text('Learning'),
-                            value: 'Learning',
-                            groupValue: currentProgress,
-                            onChanged: (value) =>
-                                _saveProgress(currentSign['name'], value!),
-                            activeColor: const Color(0xFF4facfe),
+                          const SizedBox(height: 10),
+
+                          // Difficulty Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getDifficultyColor(
+                                currentSign['difficulty'],
+                              ).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _getDifficultyColor(
+                                  currentSign['difficulty'],
+                                ),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              currentSign['difficulty'],
+                              style: TextStyle(
+                                color: _getDifficultyColor(
+                                  currentSign['difficulty'],
+                                ),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                          RadioListTile<String>(
-                            title: const Text('Practiced'),
-                            value: 'Practiced',
-                            groupValue: currentProgress,
-                            onChanged: (value) =>
-                                _saveProgress(currentSign['name'], value!),
-                            activeColor: const Color(0xFF4facfe),
+                          const SizedBox(height: 20),
+
+                          // Sign Image
+                          Container(
+                            height: 250,
+                            width: 250,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Image.asset(
+                                'images/${currentSign['image']}',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      size: 80,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                          RadioListTile<String>(
-                            title: const Text('Mastered'),
-                            value: 'Mastered',
-                            groupValue: currentProgress,
-                            onChanged: (value) =>
-                                _saveProgress(currentSign['name'], value!),
-                            activeColor: const Color(0xFF4facfe),
+                          const SizedBox(height: 20),
+
+                          // Description
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4facfe).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              currentSign['description'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                height: 1.5,
+                                color: Color(0xFF2C3E50),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-              // Navigation Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _previousSign,
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Previous'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4facfe),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  // Progress Tracking
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Mark Your Progress',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4facfe),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          Column(
+                            children: [
+                              RadioListTile<String>(
+                                title: const Text('Not Started'),
+                                value: 'Not Started',
+                                groupValue: currentProgress,
+                                onChanged: (value) =>
+                                    _saveProgress(currentSign['name'], value!),
+                                activeColor: const Color(0xFF4facfe),
+                              ),
+                              RadioListTile<String>(
+                                title: const Text('Learning'),
+                                value: 'Learning',
+                                groupValue: currentProgress,
+                                onChanged: (value) =>
+                                    _saveProgress(currentSign['name'], value!),
+                                activeColor: const Color(0xFF4facfe),
+                              ),
+                              RadioListTile<String>(
+                                title: const Text('Practiced'),
+                                value: 'Practiced',
+                                groupValue: currentProgress,
+                                onChanged: (value) =>
+                                    _saveProgress(currentSign['name'], value!),
+                                activeColor: const Color(0xFF4facfe),
+                              ),
+                              RadioListTile<String>(
+                                title: const Text('Mastered'),
+                                value: 'Mastered',
+                                groupValue: currentProgress,
+                                onChanged: (value) =>
+                                    _saveProgress(currentSign['name'], value!),
+                                activeColor: const Color(0xFF4facfe),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _nextSign,
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Next'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4facfe),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+
+                  const SizedBox(height: 30),
+
+                  // Navigation Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _previousSign,
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Previous'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4facfe),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      ElevatedButton.icon(
+                        onPressed: _nextSign,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: const Text('Next'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4facfe),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Progress Overview
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Your Progress Overview',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4facfe),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          ...signs.map((sign) {
+                            final progress =
+                                progressTracking[sign['name']] ?? 'Not Started';
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      sign['name'],
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getProgressColor(
+                                        progress,
+                                      ).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      progress,
+                                      style: TextStyle(
+                                        color: _getProgressColor(progress),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 20),
-
-              // Progress Overview
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Your Progress Overview',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4facfe),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      ...signs.map((sign) {
-                        final progress =
-                            progressTracking[sign['name']] ?? 'Not Started';
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  sign['name'],
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getProgressColor(
-                                    progress,
-                                  ).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  progress,
-                                  style: TextStyle(
-                                    color: _getProgressColor(progress),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          // Back Button
+          Positioned(
+            top: 40,
+            left: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                padding: const EdgeInsets.all(12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

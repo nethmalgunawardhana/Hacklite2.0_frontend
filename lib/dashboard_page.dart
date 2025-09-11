@@ -235,7 +235,7 @@ class _DashboardPageState extends State<DashboardPage> {
       // If no activities found, add a welcome message
       if (activities.isEmpty) {
         activities.add({
-          'title': 'Welcome to Hacklite!',
+          'title': 'Welcome!',
           'subtitle': 'Start your sign language journey',
           'time': 'Just now',
           'icon': Icons.waving_hand,
@@ -253,7 +253,7 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() {
         recentActivities = [
           {
-            'title': 'Welcome to Hacklite!',
+            'title': 'Welcome!',
             'subtitle': 'Start your sign language journey',
             'time': 'Just now',
             'icon': Icons.waving_hand,
