@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,20 +26,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _animationController.forward();
   }
 
@@ -110,8 +107,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 40),
-                    
-                    // App Logo/Icon (Enhanced)
+
+                    // App Logo/Image
                     TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: 1),
                       duration: const Duration(milliseconds: 1500),
@@ -119,33 +116,44 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                         return Transform.scale(
                           scale: value,
                           child: Container(
-                            width: 80,
-                            height: 80,
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Colors.blue, Colors.blueAccent],
-                              ),
                               borderRadius: BorderRadius.circular(25),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.blue.withOpacity(0.3),
-                                  spreadRadius: 2,
+                                  color: Colors.black.withOpacity(0.1),
                                   blurRadius: 15,
                                   offset: const Offset(0, 5),
                                 ),
                               ],
                             ),
-                            child: const Icon(
-                              Icons.security,
-                              size: 40,
-                              color: Colors.white,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(25),
+                              child: SvgPicture.asset(
+                                'assets/images/logo.svg',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.contain,
+                                semanticsLabel: 'App logo',
+                                placeholderBuilder: (context) => Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         );
                       },
                     ),
+
                     const SizedBox(height: 20),
-                    
+
                     // Welcome Text with enhanced styling
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
@@ -215,7 +223,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
                                 }
-                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                if (!RegExp(
+                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                ).hasMatch(value)) {
                                   return 'Please enter a valid email';
                                 }
                                 return null;
@@ -232,7 +242,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               obscureText: !_isPasswordVisible,
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                  _isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                   color: Colors.blue,
                                 ),
                                 onPressed: () {
@@ -251,7 +263,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 return null;
                               },
                             ),
-                            
+
                             // Forgot Password Link
                             Align(
                               alignment: Alignment.centerRight,
@@ -292,7 +304,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
                                   child: Text(
                                     'or',
                                     style: TextStyle(
@@ -326,19 +340,33 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   onTap: () {
                                     Navigator.of(context).push(
                                       PageRouteBuilder(
-                                        pageBuilder: (context, animation, secondaryAnimation) => 
-                                            const SignUpPage(),
-                                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                          const begin = Offset(1.0, 0.0);
-                                          const end = Offset.zero;
-                                          const curve = Curves.easeInOut;
-                                          var tween = Tween(begin: begin, end: end)
-                                              .chain(CurveTween(curve: curve));
-                                          return SlideTransition(
-                                            position: animation.drive(tween),
-                                            child: child,
-                                          );
-                                        },
+                                        pageBuilder:
+                                            (
+                                              context,
+                                              animation,
+                                              secondaryAnimation,
+                                            ) => const SignUpPage(),
+                                        transitionsBuilder:
+                                            (
+                                              context,
+                                              animation,
+                                              secondaryAnimation,
+                                              child,
+                                            ) {
+                                              const begin = Offset(1.0, 0.0);
+                                              const end = Offset.zero;
+                                              const curve = Curves.easeInOut;
+                                              var tween = Tween(
+                                                begin: begin,
+                                                end: end,
+                                              ).chain(CurveTween(curve: curve));
+                                              return SlideTransition(
+                                                position: animation.drive(
+                                                  tween,
+                                                ),
+                                                child: child,
+                                              );
+                                            },
                                       ),
                                     );
                                   },
@@ -382,7 +410,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                         const SizedBox(width: 6),
                         const Text(
                           'Secure login powered by Firebase',
-                          style: TextStyle(color: Color(0xFF999999), fontSize: 14),
+                          style: TextStyle(
+                            color: Color(0xFF999999),
+                            fontSize: 14,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -432,24 +463,20 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
-          hintStyle: TextStyle(
-            color: Colors.grey.shade400,
-            fontSize: 14,
-          ),
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: Container(
             margin: const EdgeInsets.all(8),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.blue.withOpacity(0.1), Colors.blue.withOpacity(0.05)],
+                colors: [
+                  Colors.blue.withOpacity(0.1),
+                  Colors.blue.withOpacity(0.05),
+                ],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              prefixIcon,
-              color: Colors.blue,
-              size: 20,
-            ),
+            child: Icon(prefixIcon, color: Colors.blue, size: 20),
           ),
           suffixIcon: suffixIcon,
           border: OutlineInputBorder(
@@ -458,24 +485,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16.0),
-            borderSide: BorderSide(
-              color: Colors.grey.shade200,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16.0),
-            borderSide: BorderSide(
-              color: Colors.blue.shade300,
-              width: 2,
-            ),
+            borderSide: BorderSide(color: Colors.blue.shade300, width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16.0),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Colors.red, width: 1.5),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
@@ -594,20 +612,16 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _animationController.forward();
   }
 
@@ -740,7 +754,10 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.blue),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.blue,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       ),
@@ -852,7 +869,9 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
                                 }
-                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                if (!RegExp(
+                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                ).hasMatch(value)) {
                                   return 'Please enter a valid email';
                                 }
                                 return null;
@@ -869,7 +888,9 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                               obscureText: !_isPasswordVisible,
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                  _isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                   color: Colors.blue,
                                 ),
                                 onPressed: () {
@@ -899,12 +920,15 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                               obscureText: !_isConfirmPasswordVisible,
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                  _isConfirmPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                   color: Colors.blue,
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                    _isConfirmPasswordVisible =
+                                        !_isConfirmPasswordVisible;
                                   });
                                 },
                               ),
@@ -938,7 +962,9 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
                                   child: Text(
                                     'or',
                                     style: TextStyle(
@@ -1010,7 +1036,10 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                         const SizedBox(width: 6),
                         const Text(
                           'Secure registration powered by Firebase',
-                          style: TextStyle(color: Color(0xFF999999), fontSize: 14),
+                          style: TextStyle(
+                            color: Color(0xFF999999),
+                            fontSize: 14,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -1060,24 +1089,20 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
-          hintStyle: TextStyle(
-            color: Colors.grey.shade400,
-            fontSize: 14,
-          ),
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: Container(
             margin: const EdgeInsets.all(8),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.blue.withOpacity(0.1), Colors.blue.withOpacity(0.05)],
+                colors: [
+                  Colors.blue.withOpacity(0.1),
+                  Colors.blue.withOpacity(0.05),
+                ],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              prefixIcon,
-              color: Colors.blue,
-              size: 20,
-            ),
+            child: Icon(prefixIcon, color: Colors.blue, size: 20),
           ),
           suffixIcon: suffixIcon,
           border: OutlineInputBorder(
@@ -1086,24 +1111,15 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16.0),
-            borderSide: BorderSide(
-              color: Colors.grey.shade200,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16.0),
-            borderSide: BorderSide(
-              color: Colors.blue.shade300,
-              width: 2,
-            ),
+            borderSide: BorderSide(color: Colors.blue.shade300, width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16.0),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Colors.red, width: 1.5),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
