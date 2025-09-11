@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class QuizPage extends StatefulWidget {
-  const QuizPage({super.key});
+  final String? quizId;
+  final String? quizTitle;
+
+  const QuizPage({super.key, this.quizId, this.quizTitle});
 
   @override
   State<QuizPage> createState() => _QuizPageState();
@@ -16,7 +19,8 @@ class _QuizPageState extends State<QuizPage> {
   int score = 0;
   List<int?> selectedAnswers = [];
   bool showResults = false;
-  List<bool> answersChecked = []; // Track if answer has been checked for each question
+  List<bool> answersChecked =
+      []; // Track if answer has been checked for each question
   List<bool> answersCorrect = []; // Track if the selected answer is correct
 
   @override
@@ -32,12 +36,24 @@ class _QuizPageState extends State<QuizPage> {
         errorMessage = null;
       });
 
-      // Get the first active quiz
-      final quizSnapshot = await FirebaseFirestore.instance
-          .collection('quizzes')
-          .where('isActive', isEqualTo: true)
-          .limit(1)
-          .get();
+      QuerySnapshot quizSnapshot;
+
+      if (widget.quizId != null) {
+        // Load specific quiz by ID
+        quizSnapshot = await FirebaseFirestore.instance
+            .collection('quizzes')
+            .where(FieldPath.documentId, isEqualTo: widget.quizId)
+            .limit(1)
+            .get();
+      } else {
+        // Get ASL quiz specifically (fallback)
+        quizSnapshot = await FirebaseFirestore.instance
+            .collection('quizzes')
+            .where('isActive', isEqualTo: true)
+            .where('quizType', isEqualTo: 'asl')
+            .limit(1)
+            .get();
+      }
 
       if (quizSnapshot.docs.isEmpty) {
         setState(() {
@@ -118,7 +134,9 @@ class _QuizPageState extends State<QuizPage> {
 
   void _checkAnswer() {
     if (selectedAnswers[currentQuestionIndex] != null) {
-      final isCorrect = selectedAnswers[currentQuestionIndex] == questions[currentQuestionIndex]['correctAnswer'];
+      final isCorrect =
+          selectedAnswers[currentQuestionIndex] ==
+          questions[currentQuestionIndex]['correctAnswer'];
       setState(() {
         answersChecked[currentQuestionIndex] = true;
         answersCorrect[currentQuestionIndex] = isCorrect;
@@ -148,7 +166,8 @@ class _QuizPageState extends State<QuizPage> {
           : Colors.grey[300]!;
     } else {
       // After checking - show correct/incorrect state
-      final correctIndex = questions[currentQuestionIndex]['correctAnswer'] as int;
+      final correctIndex =
+          questions[currentQuestionIndex]['correctAnswer'] as int;
       if (index == correctIndex) {
         return Colors.green[600]!;
       } else if (selectedAnswers[currentQuestionIndex] == index) {
@@ -179,7 +198,8 @@ class _QuizPageState extends State<QuizPage> {
       }
     } else {
       // After checking
-      final correctIndex = questions[currentQuestionIndex]['correctAnswer'] as int;
+      final correctIndex =
+          questions[currentQuestionIndex]['correctAnswer'] as int;
       if (index == correctIndex) {
         return const Icon(Icons.check_circle, color: Colors.white, size: 20);
       } else if (selectedAnswers[currentQuestionIndex] == index) {
@@ -204,7 +224,8 @@ class _QuizPageState extends State<QuizPage> {
           ? const Color(0xFF4facfe)
           : Colors.black87;
     } else {
-      final correctIndex = questions[currentQuestionIndex]['correctAnswer'] as int;
+      final correctIndex =
+          questions[currentQuestionIndex]['correctAnswer'] as int;
       if (index == correctIndex) {
         return Colors.green[800]!;
       } else if (selectedAnswers[currentQuestionIndex] == index) {
@@ -221,8 +242,10 @@ class _QuizPageState extends State<QuizPage> {
           ? FontWeight.w600
           : FontWeight.normal;
     } else {
-      final correctIndex = questions[currentQuestionIndex]['correctAnswer'] as int;
-      if (index == correctIndex || selectedAnswers[currentQuestionIndex] == index) {
+      final correctIndex =
+          questions[currentQuestionIndex]['correctAnswer'] as int;
+      if (index == correctIndex ||
+          selectedAnswers[currentQuestionIndex] == index) {
         return FontWeight.w600;
       } else {
         return FontWeight.normal;
@@ -457,7 +480,8 @@ class _QuizPageState extends State<QuizPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Practice Quiz (${currentQuestionIndex + 1}/${questions.length})',
+          widget.quizTitle ??
+              'Practice Quiz (${currentQuestionIndex + 1}/${questions.length})',
         ),
         backgroundColor: const Color(0xFF4facfe),
         actions: [
@@ -499,18 +523,52 @@ class _QuizPageState extends State<QuizPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (currentQuestion['hasImage']) ...[
+                      if (currentQuestion['hasImage'] &&
+                          currentQuestion['imageUrl'] != null) ...[
                         Container(
-                          height: 200,
+                          height: 250,
+                          width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.image,
-                              size: 60,
-                              color: Colors.grey,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              currentQuestion['imageUrl'],
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.broken_image,
+                                          size: 60,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Image not found',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),

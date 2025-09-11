@@ -6,6 +6,7 @@
   "scripts": {
     "upload": "node upload_quiz_questions.js",
     "upload-web": "node upload_quiz_web_sdk.js",
+    "upload-asl": "node upload_asl_quiz.js",
     "setup-auth": "node setup_anonymous_auth.js",
     "test": "node test_connection.js"
   },

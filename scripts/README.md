@@ -1,6 +1,16 @@
 # Quiz Upload Scripts
 
-This directory contains scripts for managing quiz data in Firestore.
+### Option 3: ASL Quiz (Image-based)
+```bash
+# Upload ASL recognition quiz with images
+npm run upload-asl
+```
+
+**Features:**
+- 10 ASL sign recognition questions
+- Mix of alphabet letters and common words
+- Uses images from the `images/` folder
+- Includes signs for: 2, K, M, Please, Eat/Lunch, Potty, Y, G, P, O, Qy contains scripts for managing quiz data in Firestore.
 
 ## 🚀 Quick Start (Easiest Method)
 
@@ -54,8 +64,10 @@ npm run upload-web
 
 ```
 scripts/
-├── upload_quiz_questions.js    # Main upload script
-├── package.json               # Dependencies
+├── upload_quiz_questions.js    # Main accessibility quiz upload script
+├── upload_quiz_web_sdk.js      # Web SDK accessibility quiz upload script
+├── upload_asl_quiz.js          # ASL image-based quiz upload script
+├── package.json               # Dependencies and scripts
 ├── README.md                  # This file
 ├── .gitignore                 # Git ignore rules
 └── service-account-key.json   # Your Firebase credentials (create this)
@@ -143,7 +155,8 @@ service cloud.firestore {
 
 ## 📝 Questions Included
 
-The script uploads 10 accessibility-focused quiz questions covering:
+### Accessibility Quiz
+The main quiz uploads 10 accessibility-focused quiz questions covering:
 - Communication methods for deaf/blind individuals
 - Accessibility tools and criticisms
 - Legal frameworks (ADA)
@@ -151,4 +164,11 @@ The script uploads 10 accessibility-focused quiz questions covering:
 - Web accessibility best practices
 - Disability awareness
 
-You can modify the questions in `upload_quiz_questions.js` and re-run the script to update Firestore.
+### ASL Recognition Quiz
+The ASL quiz includes 10 image-based questions covering:
+- ASL alphabet signs: 2, K, M, Y, G, P, O, Q
+- Common ASL words: Please, Eat/Lunch, Potty
+- Visual recognition and identification
+- Beginner to intermediate difficulty levels
+
+You can modify the questions in the respective upload scripts and re-run them to update Firestore.
