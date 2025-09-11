@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'quiz_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -42,7 +43,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: Colors.black26,
                     blurRadius: 8,
                     offset: Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -130,9 +131,10 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.school,
                           Colors.orange,
                           () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Practice Mode - Coming Soon!'),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const QuizPage(),
                               ),
                             );
                           },
@@ -539,8 +541,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         const Icon(Icons.star, color: Colors.amber, size: 16),
                         const Icon(Icons.star, color: Colors.amber, size: 16),
                         const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const Icon(Icons.star_half,
-                            color: Colors.amber, size: 16),
+                        const Icon(
+                          Icons.star_half,
+                          color: Colors.amber,
+                          size: 16,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           '4.5',

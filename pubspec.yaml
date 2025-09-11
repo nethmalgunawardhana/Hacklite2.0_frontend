@@ -36,8 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Firebase dependencies
-  firebase_core: ^4.1.0
-  firebase_auth: ^6.0.2
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.19.4
+  cloud_firestore: ^4.17.3
 
   # Camera dependencies
   camera: ^0.11.2
