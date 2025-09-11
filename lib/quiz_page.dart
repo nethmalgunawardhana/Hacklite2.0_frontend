@@ -164,6 +164,20 @@ class _QuizPageState extends State<QuizPage> {
       // Also save to global leaderboard collection
       await FirebaseFirestore.instance.collection('leaderboard').add(quizScore);
 
+      // Log activity for recent activities
+      await FirebaseFirestore.instance.collection('activities').add({
+        'userId': user.uid,
+        'type': 'quiz_completed',
+        'title': 'Completed quiz: ${widget.quizTitle ?? 'Practice Quiz'}',
+        'subtitle': 'Scored ${(score / questions.length * 100).round()}%',
+        'timestamp': FieldValue.serverTimestamp(),
+        'data': {
+          'quizTitle': widget.quizTitle ?? 'Practice Quiz',
+          'score': score,
+          'percentage': (score / questions.length * 100).round(),
+        },
+      });
+
       print('Quiz score saved successfully');
     } catch (e) {
       print('Error saving quiz score: $e');

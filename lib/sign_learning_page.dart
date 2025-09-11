@@ -3,7 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignLearningPage extends StatefulWidget {
-  const SignLearningPage({super.key});
+  final Function(int)? onSignLearned;
+  final Function(int)? onPracticeTimeUpdated;
+
+  const SignLearningPage({
+    super.key,
+    this.onSignLearned,
+    this.onPracticeTimeUpdated,
+  });
 
   @override
   State<SignLearningPage> createState() => _SignLearningPageState();
@@ -11,6 +18,10 @@ class SignLearningPage extends StatefulWidget {
 
 class _SignLearningPageState extends State<SignLearningPage> {
   final User? user = FirebaseAuth.instance.currentUser;
+
+  // Practice time tracking
+  DateTime? _practiceStartTime;
+  int _sessionPracticeMinutes = 0;
 
   // List of signs with their images and descriptions
   final List<Map<String, dynamic>> signs = [
@@ -50,7 +61,44 @@ class _SignLearningPageState extends State<SignLearningPage> {
   @override
   void initState() {
     super.initState();
+    _practiceStartTime = DateTime.now();
     _loadProgress();
+  }
+
+  @override
+  void dispose() {
+    // Calculate practice time when leaving the page
+    if (_practiceStartTime != null) {
+      final practiceDuration = DateTime.now().difference(_practiceStartTime!);
+      _sessionPracticeMinutes = practiceDuration.inMinutes;
+      if (_sessionPracticeMinutes > 0) {
+        if (widget.onPracticeTimeUpdated != null) {
+          widget.onPracticeTimeUpdated!(_sessionPracticeMinutes);
+        }
+
+        // Log practice time activity
+        if (user != null) {
+          FirebaseFirestore.instance
+              .collection('activities')
+              .add({
+                'userId': user!.uid,
+                'type': 'practice_session',
+                'title': 'Practice session completed',
+                'subtitle': 'Spent $_sessionPracticeMinutes minutes learning',
+                'timestamp': FieldValue.serverTimestamp(),
+                'data': {'minutes': _sessionPracticeMinutes},
+              })
+              .then((_) {
+                // Activity logged successfully
+              })
+              .catchError((e) {
+                print('Error logging practice activity: $e');
+                return null; // Return null to satisfy the error handler
+              });
+        }
+      }
+    }
+    super.dispose();
   }
 
   Future<void> _loadProgress() async {
@@ -77,6 +125,12 @@ class _SignLearningPageState extends State<SignLearningPage> {
   Future<void> _saveProgress(String signName, String status) async {
     if (user == null) return;
 
+    // Check if this is a new completion
+    final wasCompleted =
+        progressTracking[signName] == 'Mastered' ||
+        progressTracking[signName] == 'Practiced';
+    final isNowCompleted = status == 'Mastered' || status == 'Practiced';
+
     setState(() {
       progressTracking[signName] = status;
     });
@@ -89,6 +143,23 @@ class _SignLearningPageState extends State<SignLearningPage> {
             'sign_progress': progressTracking,
             'last_updated': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
+
+      // Call callback if sign was newly completed
+      if (!wasCompleted && isNowCompleted && widget.onSignLearned != null) {
+        widget.onSignLearned!(1);
+      }
+
+      // Log activity for recent activities if sign was newly completed
+      if (!wasCompleted && isNowCompleted) {
+        await FirebaseFirestore.instance.collection('activities').add({
+          'userId': user!.uid,
+          'type': 'sign_learned',
+          'title': 'Learned sign: $signName',
+          'subtitle': 'Sign language practice',
+          'timestamp': FieldValue.serverTimestamp(),
+          'data': {'signName': signName, 'status': status},
+        });
+      }
     } catch (e) {
       print('Error saving progress: $e');
     }
