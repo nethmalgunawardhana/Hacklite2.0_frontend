@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -8,7 +9,8 @@ class HistoryPage extends StatefulWidget {
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
-class _HistoryPageState extends State<HistoryPage> {
+class _HistoryPageState extends State<HistoryPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilter = 'All';
@@ -71,11 +73,11 @@ class _HistoryPageState extends State<HistoryPage> {
       final matchesSearch =
           _searchQuery.isEmpty ||
           item.originalText.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          ) ||
+                _searchQuery.toLowerCase(),
+              ) ||
           item.translatedText.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          );
+                _searchQuery.toLowerCase(),
+              );
 
       final matchesFilter =
           _selectedFilter == 'All' ||
@@ -89,113 +91,156 @@ class _HistoryPageState extends State<HistoryPage> {
     }).toList();
   }
 
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // Header with Search and Filters
-          Container(
-            padding: const EdgeInsets.only(
-              top: 60,
-              left: 20,
-              right: 20,
-              bottom: 20,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue, Colors.blueAccent],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+      backgroundColor: const Color(0xFFF7F9FC),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildSearchBar(),
+              _buildFilterRow(),
+              Expanded(
+                child: _filteredHistory.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: _filteredHistory.length,
+                        itemBuilder: (context, index) {
+                          return _buildHistoryItem(_filteredHistory[index], index);
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 🌊 Gradient Header
+  Widget _buildHeader() {
+    return ClipPath(
+      clipper: _WaveClipper(),
+      child: Container(
+        height: 180,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: const SafeArea(
+          child: Center(
+            child: Text(
+              'Translation History',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.1,
               ),
             ),
-            child: Column(
-              children: [
-                const Text(
-                  'Translation History',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
+          ),
+        ),
+      ),
+    );
+  }
 
-                // Search Bar
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search translations...',
-                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.grey),
-                              onPressed: () {
-                                setState(() {
-                                  _searchController.clear();
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                    ),
-                    onChanged: (value) {
+  /// 🔍 Modern Search Bar
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            )
+          ],
+        ),
+        child: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search translations...',
+            prefixIcon: const Icon(Icons.search, color: Colors.grey),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.grey),
+                    onPressed: () {
                       setState(() {
-                        _searchQuery = value;
+                        _searchController.clear();
+                        _searchQuery = '';
                       });
                     },
-                  ),
-                ),
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          ),
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+        ),
+      ),
+    );
+  }
 
-                const SizedBox(height: 16),
-
-                // Filter Buttons
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterChip('All'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Today'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Favorites'),
-                      const SizedBox(width: 8),
-                      _buildActionChip(
-                        'Clear All',
-                        Icons.delete_sweep,
-                        Colors.red,
-                        () => _showClearHistoryDialog(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+  /// 🎛️ Filter Row
+  Widget _buildFilterRow() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildFilterChip('All'),
+            const SizedBox(width: 8),
+            _buildFilterChip('Today'),
+            const SizedBox(width: 8),
+            _buildFilterChip('Favorites'),
+            const SizedBox(width: 8),
+            _buildActionChip(
+              'Clear All',
+              Icons.delete_sweep,
+              Colors.red,
+              () => _showClearHistoryDialog(),
             ),
-          ),
-
-          // History List
-          Expanded(
-            child: _filteredHistory.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _filteredHistory.length,
-                    itemBuilder: (context, index) {
-                      return _buildHistoryItem(_filteredHistory[index]);
-                    },
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -235,111 +280,139 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  Widget _buildHistoryItem(TranslationHistoryItem item) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () => _showTranslationDetails(item),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+  /// 🪟 Glassmorphism Card
+  Widget _buildHistoryItem(TranslationHistoryItem item, int index) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: Duration(milliseconds: 400 + (index * 150)),
+        builder: (context, value, child) => Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: child,
+          ),
+        ),
+        child: InkWell(
+          onTap: () => _showTranslationDetails(item),
+          borderRadius: BorderRadius.circular(16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Text(
-                          item.originalText,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.originalText,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2D3748),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                item.translatedText,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.translatedText,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        Column(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                item.isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: item.isFavorite ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: () => _toggleFavorite(item),
+                            ),
+                            Text(
+                              '${(item.confidence * 100).round()}%',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                  Column(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          item.isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: item.isFavorite ? Colors.red : Colors.grey,
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatTimestamp(item.timestamp),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
-                        onPressed: () => _toggleFavorite(item),
-                      ),
-                      Text(
-                        '${(item.confidence * 100).round()}%',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.share, size: 20),
+                              onPressed: () => _shareTranslation(item),
+                              color: Colors.grey,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.more_vert, size: 20),
+                              onPressed: () => _showItemMenu(item),
+                              color: Colors.grey,
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _formatTimestamp(item.timestamp),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.share, size: 20),
-                        onPressed: () => _shareTranslation(item),
-                        color: Colors.grey,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.more_vert, size: 20),
-                        onPressed: () => _showItemMenu(item),
-                        color: Colors.grey,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  /// 📭 Empty State
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 80, color: Colors.grey[300]),
+          Icon(Icons.hourglass_empty, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            _searchQuery.isNotEmpty
-                ? 'No results found'
-                : 'No translation history yet',
+            _searchQuery.isNotEmpty ? 'No results found' : 'No translation history yet',
             style: const TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: Colors.grey,
             ),
           ),
@@ -355,7 +428,6 @@ class _HistoryPageState extends State<HistoryPage> {
           if (_searchQuery.isEmpty)
             ElevatedButton.icon(
               onPressed: () {
-                // Navigate to camera
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Switch to Camera tab to start translating!'),
@@ -367,16 +439,15 @@ class _HistoryPageState extends State<HistoryPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
         ],
       ),
     );
   }
+
+  // ✅ Keep your logic functions the same
 
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
@@ -411,7 +482,6 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   void _shareTranslation(TranslationHistoryItem item) {
-    // TODO: Implement share functionality
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('Sharing: ${item.originalText}')));
@@ -431,11 +501,8 @@ class _HistoryPageState extends State<HistoryPage> {
             title: const Text('Copy Translation'),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Implement copy functionality
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Translation copied to clipboard'),
-                ),
+                const SnackBar(content: Text('Translation copied to clipboard')),
               );
             },
           ),
@@ -491,9 +558,9 @@ class _HistoryPageState extends State<HistoryPage> {
     setState(() {
       _mockHistory.remove(item);
     });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Translation deleted')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Translation deleted')),
+    );
   }
 
   void _showClearHistoryDialog() {
@@ -515,9 +582,9 @@ class _HistoryPageState extends State<HistoryPage> {
               setState(() {
                 _mockHistory.clear();
               });
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('History cleared')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('History cleared')),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -529,12 +596,31 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
     );
   }
+}
+
+/// 🌊 Custom wave clipper for header
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    path.lineTo(0, size.height - 50);
+    var firstControlPoint = Offset(size.width / 4, size.height);
+    var firstEndPoint = Offset(size.width / 2, size.height - 50);
+    var secondControlPoint = Offset(3 * size.width / 4, size.height - 100);
+    var secondEndPoint = Offset(size.width, size.height - 50);
+
+    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy,
+        firstEndPoint.dx, firstEndPoint.dy);
+    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy,
+        secondEndPoint.dx, secondEndPoint.dy);
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
 class TranslationHistoryItem {

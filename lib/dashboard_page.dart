@@ -14,6 +14,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,10 +29,21 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.blue, Colors.blueAccent],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  )
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,9 +54,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Welcome back,',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               color: Colors.white70,
                             ),
@@ -59,13 +71,13 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
-                      CircleAvatar(
-                        radius: 25,
+                      const CircleAvatar(
+                        radius: 28,
                         backgroundColor: Colors.white24,
                         child: Icon(
                           Icons.waving_hand,
                           color: Colors.white,
-                          size: 30,
+                          size: 32,
                         ),
                       ),
                     ],
@@ -83,20 +95,13 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
 
-            // Quick Actions
+            // Content Sections
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Quick Actions',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Quick Actions'),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -107,7 +112,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.camera_alt,
                           Colors.green,
                           () {
-                            // Navigate to camera tab
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -126,7 +130,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.school,
                           Colors.orange,
                           () {
-                            // TODO: Navigate to practice section
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Practice Mode - Coming Soon!'),
@@ -147,7 +150,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.book,
                           Colors.purple,
                           () {
-                            // TODO: Navigate to dictionary
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('ASL Dictionary - Coming Soon!'),
@@ -164,7 +166,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icons.games,
                           Colors.red,
                           () {
-                            // TODO: Navigate to games
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Games - Coming Soon!'),
@@ -177,58 +178,22 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   const SizedBox(height: 30),
-
-                  // Progress Section
-                  const Text(
-                    'Your Progress',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Your Progress'),
                   const SizedBox(height: 16),
                   _buildProgressCard(),
 
                   const SizedBox(height: 30),
-
-                  // Daily Goal
-                  const Text(
-                    'Today\'s Goal',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Today\'s Goal'),
                   const SizedBox(height: 16),
                   _buildDailyGoalCard(),
 
                   const SizedBox(height: 30),
-
-                  // Recent Activities
-                  const Text(
-                    'Recent Activities',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Recent Activities'),
                   const SizedBox(height: 16),
                   _buildRecentActivity(),
 
                   const SizedBox(height: 30),
-
-                  // Featured Lesson
-                  const Text(
-                    'Featured Lesson',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
+                  _buildSectionTitle('Featured Lesson'),
                   const SizedBox(height: 16),
                   _buildFeaturedLesson(),
                 ],
@@ -236,6 +201,17 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4facfe),
       ),
     );
   }
@@ -248,18 +224,18 @@ class _DashboardPageState extends State<DashboardPage> {
     VoidCallback onTap,
   ) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           child: Column(
             children: [
               CircleAvatar(
-                radius: 25,
-                backgroundColor: color.withOpacity(0.1),
+                radius: 28,
+                backgroundColor: color.withOpacity(0.12),
                 child: Icon(icon, color: color, size: 28),
               ),
               const SizedBox(height: 12),
@@ -271,7 +247,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 subtitle,
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -286,8 +262,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildProgressCard() {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -331,6 +307,8 @@ class _DashboardPageState extends State<DashboardPage> {
               value: 0.32,
               backgroundColor: Colors.grey[300],
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(10),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -366,6 +344,8 @@ class _DashboardPageState extends State<DashboardPage> {
             value: progress,
             backgroundColor: Colors.grey[300],
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(10),
           ),
         ],
       ),
@@ -374,8 +354,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildDailyGoalCard() {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Row(
@@ -398,7 +378,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.local_fire_department,
                         color: Colors.orange,
                         size: 16,
@@ -439,8 +419,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildRecentActivity() {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -509,16 +489,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildFeaturedLesson() {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to featured lesson
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Featured Lesson - Coming Soon!')),
           );
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(
@@ -556,11 +535,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Icon(Icons.star_half, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star_half,
+                            color: Colors.amber, size: 16),
                         const SizedBox(width: 8),
                         const Text(
                           '4.5',
