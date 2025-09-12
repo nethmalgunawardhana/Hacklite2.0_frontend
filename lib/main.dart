@@ -5,8 +5,8 @@ import 'firebase_options.dart';
 import 'auth_pages.dart';
 import 'dashboard_page.dart';
 import 'profile_page.dart';
-import 'history_page.dart';
 import 'camera_page.dart';
+import 'leaderboard_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hacklite 2.0',
+      title: 'Sign Language App',
       theme: ThemeData(
         primaryColor: Colors.blue,
         scaffoldBackgroundColor: Colors.white,
@@ -76,13 +76,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    DashboardPage(),
-    CameraPage(),
-    ProfilePage(),
-    HistoryPage(),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -92,18 +85,15 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hacklite 2.0'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-            },
-          ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          DashboardPage(onNavigateToCamera: () => _onItemTapped(1)),
+          CameraPage(),
+          LeaderboardPage(),
+          ProfilePage(),
         ],
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -114,8 +104,11 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.camera_alt),
             label: 'Camera',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.leaderboard),
+            label: 'Leaderboard',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,

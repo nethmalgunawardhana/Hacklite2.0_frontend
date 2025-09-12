@@ -1,0 +1,20 @@
+{
+  "name": "quiz-upload-script",
+  "version": "1.0.0",
+  "description": "Script to upload quiz questions to Firestore",
+  "main": "upload_quiz_questions.js",
+  "scripts": {
+    "upload": "node upload_quiz_questions.js",
+    "upload-web": "node upload_quiz_web_sdk.js",
+    "upload-asl": "node upload_asl_quiz.js",
+    "setup-auth": "node setup_anonymous_auth.js",
+    "test": "node test_connection.js"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1",
+    "firebase-admin": "^12.0.0"
+  },
+  "keywords": ["firebase", "firestore", "quiz", "accessibility"],
+  "author": "",
+  "license": "MIT"
+}
