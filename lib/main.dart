@@ -5,7 +5,6 @@ import 'firebase_options.dart';
 import 'auth_pages.dart';
 import 'dashboard_page.dart';
 import 'profile_page.dart';
-import 'history_page.dart';
 import 'camera_page.dart';
 import 'leaderboard_page.dart';
 
@@ -77,14 +76,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    DashboardPage(),
-    CameraPage(),
-    LeaderboardPage(),
-    ProfilePage(),
-    HistoryPage(),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -94,7 +85,15 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          DashboardPage(onNavigateToCamera: () => _onItemTapped(1)),
+          CameraPage(),
+          LeaderboardPage(),
+          ProfilePage(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -110,7 +109,6 @@ class _HomePageState extends State<HomePage> {
             label: 'Leaderboard',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
