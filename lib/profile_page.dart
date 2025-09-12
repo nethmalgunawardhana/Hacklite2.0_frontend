@@ -119,7 +119,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         'Username',
                                         '@${userDetails?['username'] ?? 'Not set'}',
                                         Icons.alternate_email,
-                                        const Color(0xFF667EEA),
+                                        const Color.fromARGB(255, 5, 90, 174),
                                       ),
                                       const SizedBox(height: 16),
                                       _buildUserInfoCard(
@@ -128,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage>
                                             user?.email ??
                                             'Not available',
                                         Icons.email,
-                                        const Color(0xFF764BA2),
+                                        const Color.fromARGB(255, 5, 90, 174),
                                       ),
                                       const SizedBox(height: 16),
                                       _buildUserInfoCard(
@@ -136,7 +136,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         userDetails?['gender'] ??
                                             'Not specified',
                                         Icons.people,
-                                        const Color(0xFFF093FB),
+                                        const Color.fromARGB(255, 5, 90, 174),
                                       ),
                                       const SizedBox(height: 16),
                                       _buildUserInfoCard(
@@ -144,7 +144,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         userDetails?['age']?.toString() ??
                                             'Not specified',
                                         Icons.calendar_today,
-                                        const Color(0xFF4ECDC4),
+                                        const Color.fromARGB(255, 5, 90, 174),
                                       ),
                                     ],
                                   ),

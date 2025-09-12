@@ -540,7 +540,7 @@ class _DashboardPageState extends State<DashboardPage> {
       style: const TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF4facfe),
+        color: Color.fromARGB(255, 25, 121, 204),
       ),
     );
   }
