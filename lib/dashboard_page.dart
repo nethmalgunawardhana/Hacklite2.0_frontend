@@ -6,6 +6,7 @@ import 'leaderboard_page.dart';
 import 'sign_learning_page.dart';
 import 'goal_setting_page.dart';
 import 'sign_dictionary_page.dart';
+import 'chatbot_screen.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback? onNavigateToCamera;
@@ -291,6 +292,25 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 16, right: 16),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+            );
+          },
+          backgroundColor: Colors.blue.shade700,
+          elevation: 8,
+          child: const Icon(
+            Icons.chat_bubble_outline,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
