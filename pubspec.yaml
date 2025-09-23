@@ -59,6 +59,16 @@ dependencies:
   # Speech to text
   speech_to_text: ^6.6.1
 
+  # Gemini AI
+  google_generative_ai: ^0.4.3
+
+  # Environment variables
+  flutter_dotenv: ^5.1.0
+
+  # Video player
+  video_player: ^2.8.2
+  youtube_player_flutter: ^8.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -89,6 +99,8 @@ flutter:
   assets:
     - assets/images/logo.svg
     - images/
+    - lib/models/sign_language_knowledge_bank.json
+    - assets/.env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
