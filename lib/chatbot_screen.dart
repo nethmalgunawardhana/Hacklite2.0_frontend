@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:video_player/video_player.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/gestures.dart';
+import 'services/chat_service.dart';
+import 'services/environment_config.dart';
 
 class Message {
   final bool isUser;
@@ -48,19 +49,39 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   // Gemini AI
   late GenerativeModel _model;
 
+  // Chat service
+  late ChatService _chatService;
+  String? _currentConversationId;
+  bool _showHistorySidebar = false;
+  bool _isAuthenticated = false;
+
   @override
   void initState() {
     super.initState();
     _speechToText = stt.SpeechToText();
+    _chatService = ChatService();
+    _checkAuthentication();
     _initializeGemini();
     _loadKnowledgeBank();
     _addWelcomeMessage();
   }
 
+  Future<void> _checkAuthentication() async {
+    // Check if user is authenticated
+    final user = _chatService.currentUserId;
+    setState(() {
+      _isAuthenticated = user != null && user.isNotEmpty;
+    });
+
+    if (_isAuthenticated) {
+      await _createNewConversation();
+    }
+  }
+
   void _initializeGemini() {
-    final apiKey = dotenv.env['GEMINI_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty) {
-      print('Warning: GEMINI_API_KEY not found in .env file');
+    final apiKey = EnvironmentConfig.geminiApiKey;
+    if (apiKey.isEmpty) {
+      print('Warning: GEMINI_API_KEY not found');
       return;
     }
     _model = GenerativeModel(model: 'gemini-2.0-flash-exp', apiKey: apiKey);
@@ -100,6 +121,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _messages.add(welcomeMessage);
   }
 
+  Future<void> _createNewConversation() async {
+    final conversationId = await _chatService.createConversation('New Chat');
+    setState(() {
+      _currentConversationId = conversationId;
+    });
+  }
+
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
@@ -117,6 +145,27 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
     _textController.clear();
 
+    // Save user message to Firestore only if authenticated
+    if (_isAuthenticated && _currentConversationId != null) {
+      final chatMessage = ChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: _chatService.currentUserId ?? '',
+        isUser: true,
+        text: text,
+        timestamp: userMessage.timestamp,
+        conversationId: _currentConversationId,
+      );
+      await _chatService.saveMessage(chatMessage);
+
+      // Update conversation title with first message
+      if (_messages.where((m) => m.isUser).length == 1) {
+        await _chatService.updateConversation(
+          _currentConversationId!,
+          text.length > 50 ? '${text.substring(0, 50)}...' : text,
+        );
+      }
+    }
+
     // Generate AI response
     final aiResponse = await _generateAIResponse(text);
     final aiMessage = Message(
@@ -129,6 +178,19 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       _messages.add(aiMessage);
       _isProcessing = false;
     });
+
+    // Save AI message to Firestore only if authenticated
+    if (_isAuthenticated && _currentConversationId != null) {
+      final chatMessage = ChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: _chatService.currentUserId ?? '',
+        isUser: false,
+        text: aiResponse,
+        timestamp: aiMessage.timestamp,
+        conversationId: _currentConversationId,
+      );
+      await _chatService.saveMessage(chatMessage);
+    }
 
     _scrollToBottom();
   }
@@ -674,6 +736,32 @@ Response should be comprehensive but not overwhelming.
             shadowColor: Colors.transparent,
             centerTitle: true,
             iconTheme: IconThemeData(color: Colors.blue.shade700),
+            leading: IconButton(
+              icon: Icon(
+                Icons.history,
+                color: _isAuthenticated
+                    ? Colors.blue.shade700
+                    : Colors.grey.shade400,
+              ),
+              onPressed: _isAuthenticated
+                  ? () {
+                      setState(() {
+                        _showHistorySidebar = !_showHistorySidebar;
+                      });
+                    }
+                  : null,
+              tooltip: _isAuthenticated
+                  ? 'Chat History'
+                  : 'Sign in to access chat history',
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: _startNewChat,
+                tooltip: 'New Chat',
+                color: Colors.blue.shade700,
+              ),
+            ],
             title: ShaderMask(
               shaderCallback: (bounds) => LinearGradient(
                 colors: [Colors.blue.shade800, Colors.blue.shade300],
@@ -701,54 +789,346 @@ Response should be comprehensive but not overwhelming.
             stops: const [0.7, 1.0],
           ),
         ),
-        child: Column(
+        child: Row(
           children: [
-            // Listening indicator
-            if (_isListening)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                color: Colors.red.shade100,
-                child: Row(
+            if (_showHistorySidebar && _isAuthenticated) _buildHistorySidebar(),
+            if (_showHistorySidebar && !_isAuthenticated)
+              _buildAuthRequiredSidebar(),
+            Expanded(
+              child: Column(
+                children: [
+                  // Authentication warning
+                  if (!_isAuthenticated)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(8),
+                      color: Colors.orange.shade100,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.warning, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Sign in to save and access chat history',
+                            style: TextStyle(color: Colors.orange.shade800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_isListening)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(8),
+                      color: Colors.red.shade100,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.mic, color: Colors.red),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Listening... Speak now',
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Expanded(
+                    child: SafeArea(
+                      bottom: false,
+                      child: Container(
+                        color: Colors.transparent,
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          itemCount: _messages.length + (_isProcessing ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (_isProcessing && index == _messages.length) {
+                              return _buildTypingIndicator();
+                            }
+
+                            final message = _messages[index];
+                            return _buildMessageItem(message);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  _buildSampleQuestions(),
+                  _buildInputArea(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistorySidebar() {
+    return Container(
+      width: 300,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(2, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Chat History',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: _startNewChat,
+                  tooltip: 'New Chat',
+                ),
+              ],
+            ),
+          ),
+          // Conversations list
+          Expanded(
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _chatService.getConversations(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Error loading conversations: ${snapshot.error}',
+                    ),
+                  );
+                }
+
+                final conversations = snapshot.data ?? [];
+
+                if (conversations.isEmpty) {
+                  return const Center(child: Text('No chat history yet'));
+                }
+
+                return ListView.builder(
+                  itemCount: conversations.length,
+                  itemBuilder: (context, index) {
+                    final conversation = conversations[index];
+                    final isSelected =
+                        conversation['id'] == _currentConversationId;
+
+                    return ListTile(
+                      selected: isSelected,
+                      selectedTileColor: Colors.blue.shade50,
+                      leading: const Icon(Icons.chat_bubble_outline),
+                      title: Text(
+                        conversation['title'] ?? 'Untitled Chat',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        _formatTimestamp(conversation['lastMessageTime']),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      onTap: () => _loadConversation(conversation['id']),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'delete') {
+                            _deleteConversation(conversation['id']);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimestamp(String? timestampString) {
+    if (timestampString == null) return '';
+
+    try {
+      final timestamp = DateTime.parse(timestampString);
+      final now = DateTime.now();
+      final difference = now.difference(timestamp);
+
+      if (difference.inDays > 0) {
+        return '${difference.inDays}d ago';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes}m ago';
+      } else {
+        return 'Just now';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+
+  Future<void> _startNewChat() async {
+    // Check if there are user messages (excluding the welcome message)
+    final hasUserMessages = _messages.where((msg) => msg.isUser).isNotEmpty;
+
+    if (hasUserMessages) {
+      // Show confirmation dialog
+      final shouldStartNew = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Start New Chat?'),
+          content: const Text(
+            'Starting a new chat will clear the current conversation. This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.blue),
+              child: const Text('Start New Chat'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldStartNew != true) {
+        return; // User cancelled
+      }
+    }
+
+    setState(() {
+      _messages.clear();
+      _showHistorySidebar = false;
+    });
+    await _createNewConversation();
+    _addWelcomeMessage();
+  }
+
+  Future<void> _loadConversation(String conversationId) async {
+    final messages = await _chatService.getMessages(conversationId);
+    setState(() {
+      _messages.clear();
+      _currentConversationId = conversationId;
+      _showHistorySidebar = false;
+    });
+
+    // Convert ChatMessage to Message
+    for (final chatMessage in messages) {
+      final message = Message(
+        isUser: chatMessage.isUser,
+        text: chatMessage.text,
+        timestamp: chatMessage.timestamp,
+      );
+      _messages.add(message);
+    }
+
+    _scrollToBottom();
+  }
+
+  Future<void> _deleteConversation(String conversationId) async {
+    await _chatService.deleteConversation(conversationId);
+
+    // If the deleted conversation was current, start a new one
+    if (conversationId == _currentConversationId) {
+      await _startNewChat();
+    } else {
+      // Refresh the sidebar
+      setState(() {});
+    }
+  }
+
+  Widget _buildAuthRequiredSidebar() {
+    return Container(
+      width: 300,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(2, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: const Text(
+              'Chat History',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          // Auth required message
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.mic, color: Colors.red),
-                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.account_circle,
+                      size: 64,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 16),
                     Text(
-                      'Listening... Speak now',
-                      style: const TextStyle(color: Colors.red),
+                      'Sign in Required',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please sign in to save and access your chat history.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade600),
                     ),
                   ],
                 ),
               ),
-            Expanded(
-              child: SafeArea(
-                bottom: false,
-                child: Container(
-                  color: Colors.transparent,
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    itemCount: _messages.length + (_isProcessing ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (_isProcessing && index == _messages.length) {
-                        return _buildTypingIndicator();
-                      }
-
-                      final message = _messages[index];
-                      return _buildMessageItem(message);
-                    },
-                  ),
-                ),
-              ),
             ),
-            _buildSampleQuestions(),
-            _buildInputArea(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
