@@ -72,7 +72,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         'lib/models/sign_language_knowledge_bank.json',
       );
       _knowledgeBank = json.decode(jsonString);
-      print('DEBUG: Knowledge bank loaded successfully. Signs count: ${_knowledgeBank!['signs'].length}');
+      print(
+        'DEBUG: Knowledge bank loaded successfully. Signs count: ${_knowledgeBank!['signs'].length}',
+      );
       print('DEBUG: First sign: ${_knowledgeBank!['signs'][0]}');
     } catch (e) {
       print('Error loading knowledge bank: $e');
@@ -153,8 +155,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Future<bool> _isSignLanguageQuery(String message) async {
     // First check for obvious sign language keywords
     final signKeywords = [
-      'sign', 'asl', 'sign language', 'signing', 'signed',
-      'how to sign', 'sign for', 'asl for', 'show me'
+      'sign',
+      'asl',
+      'sign language',
+      'signing',
+      'signed',
+      'how to sign',
+      'sign for',
+      'asl for',
+      'show me',
     ];
 
     final lowerMessage = message.toLowerCase();
@@ -206,15 +215,19 @@ Examples of non-sign language queries:
       if (signWord != null) {
         // Look up the sign in the knowledge bank
         final signData = signs.firstWhere(
-          (sign) => sign['word'].toString().toLowerCase() == signWord.toLowerCase(),
+          (sign) =>
+              sign['word'].toString().toLowerCase() == signWord.toLowerCase(),
           orElse: () => null,
         );
 
         if (signData != null) {
           final description = signData['description'] as String;
           final videoUrl = signData['video_url'] as String;
-          print('DEBUG: Found sign $signWord, description: $description, videoUrl: $videoUrl');
-          final response = 'Here\'s how to sign "$signWord":\n\n$description\n\n📹 Watch the video tutorial: $videoUrl';
+          print(
+            'DEBUG: Found sign $signWord, description: $description, videoUrl: $videoUrl',
+          );
+          final response =
+              'Here\'s how to sign "$signWord":\n\n$description\n\n📹 Watch the video tutorial: $videoUrl';
           print('DEBUG: Returning response: $response');
           return response;
         } else {
@@ -448,37 +461,41 @@ Keep responses concise and helpful.
     for (final match in matches) {
       // Add text before the URL
       if (match.start > lastEnd) {
-        spans.add(TextSpan(
-          text: text.substring(lastEnd, match.start),
-          style: TextStyle(color: isUser ? Colors.white : Colors.black87),
-        ));
+        spans.add(
+          TextSpan(
+            text: text.substring(lastEnd, match.start),
+            style: TextStyle(color: isUser ? Colors.white : Colors.black87),
+          ),
+        );
       }
 
       // Add clickable URL
-      spans.add(TextSpan(
-        text: match.group(0),
-        style: TextStyle(
-          color: isUser ? Colors.white : Colors.blue,
-          decoration: TextDecoration.underline,
+      spans.add(
+        TextSpan(
+          text: match.group(0),
+          style: TextStyle(
+            color: isUser ? Colors.white : Colors.blue,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => _showVideoPopup(match.group(0)!),
         ),
-        recognizer: TapGestureRecognizer()
-          ..onTap = () => _showVideoPopup(match.group(0)!),
-      ));
+      );
 
       lastEnd = match.end;
     }
 
     // Add remaining text
     if (lastEnd < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(lastEnd),
-        style: TextStyle(color: isUser ? Colors.white : Colors.black87),
-      ));
+      spans.add(
+        TextSpan(
+          text: text.substring(lastEnd),
+          style: TextStyle(color: isUser ? Colors.white : Colors.black87),
+        ),
+      );
     }
 
-    return SelectableText.rich(
-      TextSpan(children: spans),
-    );
+    return SelectableText.rich(TextSpan(children: spans));
   }
 
   Widget _buildInputArea() {
@@ -734,7 +751,9 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
   }
 
   Future<void> _initializeVideoPlayer() async {
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse(widget.videoUrl),
+    );
     try {
       await _videoController!.initialize();
       setState(() {
@@ -815,23 +834,21 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
             Expanded(
               child: _isInitialized
                   ? _isYouTubeVideo
-                      ? YoutubePlayer(
-                          controller: _youtubeController!,
-                          showVideoProgressIndicator: true,
-                          progressIndicatorColor: Colors.blue,
-                          progressColors: const ProgressBarColors(
-                            playedColor: Colors.blue,
-                            handleColor: Colors.blueAccent,
-                          ),
-                        )
-                      : AspectRatio(
-                          aspectRatio: _videoController!.value.aspectRatio,
-                          child: VideoPlayer(_videoController!),
-                        )
+                        ? YoutubePlayer(
+                            controller: _youtubeController!,
+                            showVideoProgressIndicator: true,
+                            progressIndicatorColor: Colors.blue,
+                            progressColors: const ProgressBarColors(
+                              playedColor: Colors.blue,
+                              handleColor: Colors.blueAccent,
+                            ),
+                          )
+                        : AspectRatio(
+                            aspectRatio: _videoController!.value.aspectRatio,
+                            child: VideoPlayer(_videoController!),
+                          )
                   : const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                      ),
+                      child: CircularProgressIndicator(color: Colors.white),
                     ),
             ),
             // Controls (only for non-YouTube videos)
