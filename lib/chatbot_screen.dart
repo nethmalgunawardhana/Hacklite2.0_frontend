@@ -210,6 +210,7 @@ Examples of non-sign language queries:
 
       // First, try to find the specific sign the user is asking about
       final signWord = _extractSignFromQuery(userMessage.toLowerCase());
+      print('DEBUG: User message: $userMessage');
       print('DEBUG: Extracted sign word: $signWord');
 
       if (signWord != null) {
@@ -228,7 +229,7 @@ Examples of non-sign language queries:
           );
           final response =
               'Here\'s how to sign "$signWord":\n\n$description\n\n📹 Watch the video tutorial: $videoUrl';
-          print('DEBUG: Returning response: $response');
+          print('DEBUG: Returning knowledge bank response: $response');
           return response;
         } else {
           print('DEBUG: Sign word "$signWord" not found in knowledge bank');
@@ -238,6 +239,7 @@ Examples of non-sign language queries:
       }
 
       // If no specific sign found, use AI to generate a general response
+      print('DEBUG: No specific sign found, using AI fallback');
       final prompt =
           '''
 You are a sign language assistant. The user asked: "$userMessage"
@@ -249,6 +251,10 @@ Categories: ${categories.keys.join(', ')}
 Please analyze the user's query and provide helpful information about sign language learning.
 If they ask generally about sign language, provide helpful information.
 If they ask for a category, list the signs in that category.
+If they ask about a specific sign, include the video tutorial URL from the knowledge bank.
+
+When responding about specific signs, always include the video URL in this format:
+📹 Watch the video tutorial: [URL]
 
 Keep responses concise and helpful.
 ''';
@@ -263,15 +269,18 @@ Keep responses concise and helpful.
   }
 
   String? _extractSignFromQuery(String query) {
+    print('DEBUG: _extractSignFromQuery called with: $query');
     final signs = _knowledgeBank!['signs'] as List<dynamic>;
 
     // Common patterns for asking about signs
     final patterns = [
       RegExp(r'how (?:do you|to) sign (.+?)(?:\?|$|\s)', caseSensitive: false),
+      RegExp(r'say (.+?) in', caseSensitive: false),
       RegExp(r'what is the sign for (.+?)(?:\?|$|\s)', caseSensitive: false),
       RegExp(r'show me (.+?) sign', caseSensitive: false),
       RegExp(r'sign for (.+?)(?:\?|$|\s)', caseSensitive: false),
-      RegExp(r'(.+?) sign language', caseSensitive: false),
+      RegExp(r'sign language for (.+?)(?:\?|$|\s)', caseSensitive: false),
+      RegExp(r'(.+?) in .*sign language', caseSensitive: false),
       RegExp(r'asl for (.+?)(?:\?|$|\s)', caseSensitive: false),
     ];
 
@@ -279,6 +288,9 @@ Keep responses concise and helpful.
       final match = pattern.firstMatch(query);
       if (match != null && match.groupCount >= 1) {
         final extractedWord = match.group(1)?.trim().toLowerCase();
+        print(
+          'DEBUG: Pattern matched: ${pattern.pattern}, extracted: $extractedWord',
+        );
         if (extractedWord != null) {
           // Check if the extracted word matches any sign in our knowledge bank
           final signExists = signs.any(
