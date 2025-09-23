@@ -323,9 +323,10 @@ class _DashboardPageState extends State<DashboardPage>
                 child: Container(
                   width: 100,
                   height: 100,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.black,
                     shape: BoxShape.circle,
+                    border: Border.all(color: Colors.blue.shade700, width: 5),
                   ),
                   child: Center(
                     child: Image.asset(
