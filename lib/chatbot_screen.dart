@@ -91,7 +91,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   void _addWelcomeMessage() {
     const welcomeText =
-        "Hello! I'm your AI assistant. How can I help you today?";
+        "Hello! I'm your Sign Language Assistant. How can I help you with ASL today?";
     final welcomeMessage = Message(
       isUser: false,
       text: welcomeText,
@@ -201,99 +201,91 @@ Examples of non-sign language queries:
       final signs = _knowledgeBank!['signs'] as List<dynamic>;
       final categories = _knowledgeBank!['categories'] as Map<String, dynamic>;
 
-      // First, try to find the specific sign the user is asking about
-      final signWord = _extractSignFromQuery(userMessage.toLowerCase());
-      print('DEBUG: User message: $userMessage');
-      print('DEBUG: Extracted sign word: $signWord');
+      // Use LLM to understand the user query and extract the sign they're asking about
+      final signExtractionPrompt =
+          '''
+Analyze this user message about sign language and determine what specific sign they are asking about.
 
-      if (signWord != null) {
-        // Look up the sign in the knowledge bank
+User message: "$userMessage"
+
+Available signs in our knowledge bank: ${signs.map((s) => s['word']).join(', ')}
+
+If the user is asking about a specific sign that exists in our knowledge bank, return only the exact sign name in lowercase.
+If the user is asking about a sign that doesn't exist, or if it's a general question, return "GENERAL".
+If the user is asking about multiple signs, return the most relevant one.
+
+Examples:
+- "How do you sign hello?" -> "hello"
+- "What's the sign for thank you?" -> "thank you"
+- "Show me how to sign eat" -> "eat"
+- "What is sign language?" -> "GENERAL"
+- "Tell me about ASL" -> "GENERAL"
+
+Return only the sign name or "GENERAL" (no quotes, no explanation).
+''';
+
+      final extractionResponse = await _model.generateContent([
+        Content.text(signExtractionPrompt),
+      ]);
+      final extractedSign =
+          extractionResponse.text?.trim().toLowerCase() ?? 'general';
+
+      print('DEBUG: LLM extracted sign: $extractedSign');
+
+      // If a specific sign was identified, look it up in the knowledge bank
+      if (extractedSign != 'general' && extractedSign.isNotEmpty) {
         final signData = signs.firstWhere(
-          (sign) =>
-              sign['word'].toString().toLowerCase() == signWord.toLowerCase(),
+          (sign) => sign['word'].toString().toLowerCase() == extractedSign,
           orElse: () => null,
         );
 
         if (signData != null) {
           final description = signData['description'] as String;
           final videoUrl = signData['video_url'] as String;
+          final difficulty = signData['difficulty'] as String;
           print(
-            'DEBUG: Found sign $signWord, description: $description, videoUrl: $videoUrl',
+            'DEBUG: Found sign $extractedSign, description: $description, videoUrl: $videoUrl',
           );
+
           final response =
-              'Here\'s how to sign "$signWord":\n\n$description\n\n📹 Watch the video tutorial: $videoUrl';
+              'Here\'s how to sign "$extractedSign" (${difficulty}):\n\n$description\n\n📹 Watch the video tutorial: $videoUrl';
           print('DEBUG: Returning knowledge bank response: $response');
           return response;
-        } else {
-          print('DEBUG: Sign word "$signWord" not found in knowledge bank');
         }
-      } else {
-        print('DEBUG: No sign word extracted from query');
       }
 
-      // If no specific sign found, use AI to generate a general response
-      print('DEBUG: No specific sign found, using AI fallback');
-      final prompt =
+      // If no specific sign found or general question, use AI to generate a comprehensive response
+      print('DEBUG: Using AI fallback for general response or unknown sign');
+      final generalPrompt =
           '''
-You are a sign language assistant. The user asked: "$userMessage"
+You are a helpful Sign Language Assistant. The user asked: "$userMessage"
 
 Available signs in our knowledge bank: ${signs.map((s) => s['word']).join(', ')}
+Categories available: ${categories.keys.join(', ')}
 
-Categories: ${categories.keys.join(', ')}
+${extractedSign != 'general' ? 'Note: The user asked about "$extractedSign" but this sign is not in our knowledge bank.' : ''}
 
-Provide a brief, helpful response about ASL/sign language. Keep it under 100 words.
-If they ask about a specific sign, include the video URL if available.
-If they ask generally, give concise learning tips.
+Provide a helpful, informative response about American Sign Language (ASL). Include:
+- Clear explanations of signs when possible
+- Learning tips for ASL
+- Information about ASL structure and usage
+- Video tutorial links when available (format: 📹 Watch: [URL])
+- Encouragement for learning ASL
 
-Format: Keep responses short and direct.
+Keep the response engaging and educational. If they ask about a sign not in our database, provide general guidance on how to learn that sign or similar signs.
+
+Response should be comprehensive but not overwhelming.
 ''';
 
-      final response = await _model.generateContent([Content.text(prompt)]);
+      final response = await _model.generateContent([
+        Content.text(generalPrompt),
+      ]);
       return response.text ??
           'Sorry, I couldn\'t generate a response right now.';
     } catch (e) {
       print('Error generating sign language response: $e');
       return 'Sorry, I encountered an error while processing your sign language query.';
     }
-  }
-
-  String? _extractSignFromQuery(String query) {
-    print('DEBUG: _extractSignFromQuery called with: $query');
-    final signs = _knowledgeBank!['signs'] as List<dynamic>;
-
-    // Common patterns for asking about signs
-    final patterns = [
-      RegExp(r'how (?:do you|to) sign (.+?)(?:\?|$|\s)', caseSensitive: false),
-      RegExp(r'say (.+?) in', caseSensitive: false),
-      RegExp(r'what is the sign for (.+?)(?:\?|$|\s)', caseSensitive: false),
-      RegExp(r'show me (.+?) sign', caseSensitive: false),
-      RegExp(r'sign for (.+?)(?:\?|$|\s)', caseSensitive: false),
-      RegExp(r'sign language for (.+?)(?:\?|$|\s)', caseSensitive: false),
-      RegExp(r'(.+?) in .*sign language', caseSensitive: false),
-      RegExp(r'asl for (.+?)(?:\?|$|\s)', caseSensitive: false),
-    ];
-
-    for (final pattern in patterns) {
-      final match = pattern.firstMatch(query);
-      if (match != null && match.groupCount >= 1) {
-        final extractedWord = match.group(1)?.trim().toLowerCase();
-        print(
-          'DEBUG: Pattern matched: ${pattern.pattern}, extracted: $extractedWord',
-        );
-        if (extractedWord != null) {
-          // Check if the extracted word matches any sign in our knowledge bank
-          final signExists = signs.any(
-            (sign) => sign['word'].toString().toLowerCase() == extractedWord,
-          );
-          if (signExists) {
-            print('DEBUG: Extracted sign word: $extractedWord');
-            return extractedWord;
-          }
-        }
-      }
-    }
-
-    return null;
   }
 
   void _scrollToBottom() {
@@ -309,51 +301,104 @@ Format: Keep responses short and direct.
   }
 
   Future<void> _startListening() async {
-    if (!_isListening) {
+    // Check if already listening
+    if (_isListening) {
+      await _stopListening();
+      return;
+    }
+
+    // Check if speech recognition is available
+    if (!_speechToText.isAvailable) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Speech recognition is not available. Please check your device settings.',
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
       bool available = await _speechToText.initialize(
-        onError: (error) =>
-            print('Speech recognition error: $error'), // ignore: avoid_print
-        onStatus: (status) =>
-            print('Speech recognition status: $status'), // ignore: avoid_print
+        onError: (error) {
+          print('Speech recognition error: $error');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Speech recognition error: $error'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          setState(() => _isListening = false);
+        },
+        onStatus: (status) {
+          print('Speech recognition status: $status');
+          if (status == 'notListening' && _isListening) {
+            setState(() => _isListening = false);
+          }
+        },
+        options: [],
       );
 
       if (available) {
         setState(() => _isListening = true);
 
-        _speechToText.listen(
+        await _speechToText.listen(
           onResult: (result) {
             setState(() {
               _lastWords = result.recognizedWords;
               _textController.text = _lastWords;
             });
 
-            if (result.finalResult) {
-              _stopListening();
+            if (result.finalResult && _lastWords.trim().isNotEmpty) {
+              // Automatically send the message when speech is finalized
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted && _lastWords.trim().isNotEmpty) {
+                  _sendMessage(_lastWords.trim());
+                  _stopListening();
+                }
+              });
             }
           },
           listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 3),
-          partialResults: true, // ignore: deprecated_member_use
-          cancelOnError: true, // ignore: deprecated_member_use
+          pauseFor: const Duration(seconds: 2),
         );
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Speech recognition not available on this device'),
-              duration: Duration(seconds: 2),
+              duration: Duration(seconds: 3),
             ),
           );
         }
       }
-    } else {
-      _stopListening();
+    } catch (e) {
+      print('Error starting speech recognition: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error starting speech recognition: $e'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      setState(() => _isListening = false);
     }
   }
 
   Future<void> _stopListening() async {
     await _speechToText.stop();
-    setState(() => _isListening = false);
+    setState(() {
+      _isListening = false;
+      // Clear the last words when stopping
+      _lastWords = '';
+    });
   }
 
   Widget _buildTypingIndicator() {
@@ -636,7 +681,7 @@ Format: Keep responses short and direct.
                 end: Alignment.bottomRight,
               ).createShader(bounds),
               child: const Text(
-                'AI Assistant',
+                'Sign Language Assistant',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
