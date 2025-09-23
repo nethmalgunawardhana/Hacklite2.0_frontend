@@ -17,7 +17,10 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
   final User? user = FirebaseAuth.instance.currentUser;
 
   // User stats
@@ -46,6 +49,13 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.0, end: 10.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
     _fetchUserStats();
     _fetchUserGoals();
     _fetchTodayProgress();
@@ -294,20 +304,41 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: Colors.grey[100],
       floatingActionButton: Container(
         margin: const EdgeInsets.only(bottom: 16, right: 16),
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, -_animation.value),
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChatbotScreen(),
+                    ),
+                  );
+                },
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.blue.shade700, width: 5),
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      'images/chatbot_icon.png',
+                      width: 70,
+                      height: 70,
+                    ),
+                  ),
+                ),
+              ),
             );
           },
-          backgroundColor: Colors.blue.shade700,
-          elevation: 8,
-          child: const Icon(
-            Icons.chat_bubble_outline,
-            color: Colors.white,
-            size: 28,
-          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -1223,5 +1254,11 @@ class _DashboardPageState extends State<DashboardPage> {
     } catch (e) {
       print('Error logging goal setting activity: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 }

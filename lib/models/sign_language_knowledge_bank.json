@@ -1,0 +1,70 @@
+{
+  "signs": [
+    {
+      "word": "hello",
+      "description": "Wave your hand with palm facing outward and fingers together",
+      "video_url": "https://www.youtube.com/watch?v=MBDx8FtzLTU",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "thank you",
+      "description": "Touch your chin with your fingertips and move your hand outward",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "please",
+      "description": "Rub your chest in a circular motion with your open hand",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "sorry",
+      "description": "Make a fist and rub it in a circular motion over your chest",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "eat",
+      "description": "Bring your fingertips to your mouth and move them away as if feeding yourself",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "drink",
+      "description": "Make a 'C' shape with your hand and bring it to your mouth",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "bathroom",
+      "description": "Point to your bathroom or make a 'T' sign near your forehead",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "intermediate"
+    },
+    {
+      "word": "help",
+      "description": "Make two 'A' hands and alternate bringing them up to your shoulder",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "friend",
+      "description": "Hook both index fingers together",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "beginner"
+    },
+    {
+      "word": "family",
+      "description": "Make a 'F' handshape and tap it on your chin, then circle around your face",
+      "video_url": "https://www.youtube.com/watch?v=0p_8mT9r7lA",
+      "difficulty": "intermediate"
+    }
+  ],
+  "categories": {
+    "greetings": ["hello", "thank you", "please", "sorry"],
+    "food": ["eat", "drink"],
+    "emergency": ["help", "bathroom"],
+    "relationships": ["friend", "family"]
+  }
+}

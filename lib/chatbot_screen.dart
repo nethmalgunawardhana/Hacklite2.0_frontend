@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:video_player/video_player.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/gestures.dart';
 
 class Message {
   final bool isUser;
@@ -35,11 +42,43 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   bool _isListening = false;
   String _lastWords = '';
 
+  // Knowledge bank
+  Map<String, dynamic>? _knowledgeBank;
+
+  // Gemini AI
+  late GenerativeModel _model;
+
   @override
   void initState() {
     super.initState();
     _speechToText = stt.SpeechToText();
+    _initializeGemini();
+    _loadKnowledgeBank();
     _addWelcomeMessage();
+  }
+
+  void _initializeGemini() {
+    final apiKey = dotenv.env['GEMINI_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      print('Warning: GEMINI_API_KEY not found in .env file');
+      return;
+    }
+    _model = GenerativeModel(model: 'gemini-2.0-flash-exp', apiKey: apiKey);
+  }
+
+  Future<void> _loadKnowledgeBank() async {
+    try {
+      final jsonString = await rootBundle.loadString(
+        'lib/models/sign_language_knowledge_bank.json',
+      );
+      _knowledgeBank = json.decode(jsonString);
+      print(
+        'DEBUG: Knowledge bank loaded successfully. Signs count: ${_knowledgeBank!['signs'].length}',
+      );
+      print('DEBUG: First sign: ${_knowledgeBank!['signs'][0]}');
+    } catch (e) {
+      print('Error loading knowledge bank: $e');
+    }
   }
 
   @override
@@ -52,7 +91,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   void _addWelcomeMessage() {
     const welcomeText =
-        "Hello! I'm your AI assistant. How can I help you today?";
+        "Hello! I'm your Sign Language Assistant. How can I help you with ASL today?";
     final welcomeMessage = Message(
       isUser: false,
       text: welcomeText,
@@ -78,10 +117,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
     _textController.clear();
 
-    // Simulate AI response (replace with actual AI service)
-    await Future.delayed(const Duration(seconds: 1));
-
-    final aiResponse = _generateAIResponse(text);
+    // Generate AI response
+    final aiResponse = await _generateAIResponse(text);
     final aiMessage = Message(
       isUser: false,
       text: aiResponse,
@@ -96,15 +133,159 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
   }
 
-  String _generateAIResponse(String userMessage) {
-    // Simple response generation - replace with actual AI service
-    final responses = [
-      "I understand you're asking about: $userMessage. Let me help you with that.",
-      "That's an interesting question! Based on what you've shared, here's what I think...",
-      "Thanks for your message. I'd be happy to assist you with that.",
-      "I see you mentioned: $userMessage. Here's some information that might help...",
+  Future<String> _generateAIResponse(String userMessage) async {
+    // Check if the message is about sign language
+    final isSignLanguageQuery = await _isSignLanguageQuery(userMessage);
+
+    if (isSignLanguageQuery && _knowledgeBank != null) {
+      return await _generateSignLanguageResponse(userMessage);
+    } else {
+      // Only respond to ASL/sign language queries
+      return "I'm here to help with American Sign Language (ASL) questions! Try asking me about signs like 'How do you sign hello?' or 'What's the sign for thank you?'";
+    }
+  }
+
+  Future<bool> _isSignLanguageQuery(String message) async {
+    // First check for obvious sign language keywords
+    final signKeywords = [
+      'sign',
+      'asl',
+      'sign language',
+      'signing',
+      'signed',
+      'how to sign',
+      'sign for',
+      'asl for',
+      'show me',
     ];
-    return responses[DateTime.now().millisecondsSinceEpoch % responses.length];
+
+    final lowerMessage = message.toLowerCase();
+    if (signKeywords.any((keyword) => lowerMessage.contains(keyword))) {
+      print('DEBUG: Detected sign language query via keywords: $message');
+      return true;
+    }
+
+    try {
+      final prompt =
+          '''
+Analyze this user message and determine if it's asking about sign language, ASL (American Sign Language), or related topics.
+Return only "true" if it's clearly about sign language, or "false" if it's not.
+
+Message: "$message"
+
+Examples of sign language queries:
+- "How do you sign hello?"
+- "What is the sign for thank you?"
+- "Show me ASL for eat"
+- "Sign language video for please"
+
+Examples of non-sign language queries:
+- "What's the weather like?"
+- "How to cook pasta?"
+- "Tell me about Flutter development"
+''';
+
+      final response = await _model.generateContent([Content.text(prompt)]);
+      final result = response.text?.toLowerCase().trim() ?? 'false';
+      print('DEBUG: AI sign language detection for "$message": $result');
+      return result == 'true';
+    } catch (e) {
+      print('Error checking sign language query: $e');
+      return false;
+    }
+  }
+
+  Future<String> _generateSignLanguageResponse(String userMessage) async {
+    try {
+      print('DEBUG: Generating sign language response for: $userMessage');
+      final signs = _knowledgeBank!['signs'] as List<dynamic>;
+      final categories = _knowledgeBank!['categories'] as Map<String, dynamic>;
+
+      // Use LLM to understand the user query and extract the sign they're asking about
+      final signExtractionPrompt =
+          '''
+Analyze this user message about sign language and determine what specific sign they are asking about.
+
+User message: "$userMessage"
+
+Available signs in our knowledge bank: ${signs.map((s) => s['word']).join(', ')}
+
+If the user is asking about a specific sign that exists in our knowledge bank, return only the exact sign name in lowercase.
+If the user is asking about a sign that doesn't exist, or if it's a general question, return "GENERAL".
+If the user is asking about multiple signs, return the most relevant one.
+
+Examples:
+- "How do you sign hello?" -> "hello"
+- "What's the sign for thank you?" -> "thank you"
+- "Show me how to sign eat" -> "eat"
+- "What is sign language?" -> "GENERAL"
+- "Tell me about ASL" -> "GENERAL"
+
+Return only the sign name or "GENERAL" (no quotes, no explanation).
+''';
+
+      final extractionResponse = await _model.generateContent([
+        Content.text(signExtractionPrompt),
+      ]);
+      final extractedSign =
+          extractionResponse.text?.trim().toLowerCase() ?? 'general';
+
+      print('DEBUG: LLM extracted sign: $extractedSign');
+
+      // If a specific sign was identified, look it up in the knowledge bank
+      if (extractedSign != 'general' && extractedSign.isNotEmpty) {
+        final signData = signs.firstWhere(
+          (sign) => sign['word'].toString().toLowerCase() == extractedSign,
+          orElse: () => null,
+        );
+
+        if (signData != null) {
+          final description = signData['description'] as String;
+          final videoUrl = signData['video_url'] as String;
+          final difficulty = signData['difficulty'] as String;
+          print(
+            'DEBUG: Found sign $extractedSign, description: $description, videoUrl: $videoUrl',
+          );
+
+          final response =
+              'Here\'s how to sign "$extractedSign" (${difficulty}):\n\n$description\n\n📹 Watch the video tutorial: $videoUrl';
+          print('DEBUG: Returning knowledge bank response: $response');
+          return response;
+        }
+      }
+
+      // If no specific sign found or general question, use AI to generate a comprehensive response
+      print('DEBUG: Using AI fallback for general response or unknown sign');
+      final generalPrompt =
+          '''
+You are a helpful Sign Language Assistant. The user asked: "$userMessage"
+
+Available signs in our knowledge bank: ${signs.map((s) => s['word']).join(', ')}
+Categories available: ${categories.keys.join(', ')}
+
+${extractedSign != 'general' ? 'Note: The user asked about "$extractedSign" but this sign is not in our knowledge bank.' : ''}
+
+Provide a helpful, informative response about American Sign Language (ASL). Include:
+- Clear explanations of signs when possible
+- Learning tips for ASL
+- Information about ASL structure and usage
+- Video tutorial links when available (format: 📹 Watch: [URL])
+- Encouragement for learning ASL
+
+Keep the response engaging and educational. If they ask about a sign not in our database, provide general guidance on how to learn that sign or similar signs.
+
+Response should be comprehensive but not overwhelming.
+''';
+
+      final response = await _model.generateContent([
+        Content.text(generalPrompt),
+      ]);
+      return response.text ??
+          'Sorry, I couldn\'t generate a response right now.';
+    } catch (e) {
+      print('Error generating sign language response: $e');
+      return 'Sorry, I encountered an error while processing your sign language query.';
+    }
   }
 
   void _scrollToBottom() {
@@ -120,51 +301,104 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   Future<void> _startListening() async {
-    if (!_isListening) {
+    // Check if already listening
+    if (_isListening) {
+      await _stopListening();
+      return;
+    }
+
+    // Check if speech recognition is available
+    if (!_speechToText.isAvailable) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Speech recognition is not available. Please check your device settings.',
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
       bool available = await _speechToText.initialize(
-        onError: (error) =>
-            print('Speech recognition error: $error'), // ignore: avoid_print
-        onStatus: (status) =>
-            print('Speech recognition status: $status'), // ignore: avoid_print
+        onError: (error) {
+          print('Speech recognition error: $error');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Speech recognition error: $error'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          setState(() => _isListening = false);
+        },
+        onStatus: (status) {
+          print('Speech recognition status: $status');
+          if (status == 'notListening' && _isListening) {
+            setState(() => _isListening = false);
+          }
+        },
+        options: [],
       );
 
       if (available) {
         setState(() => _isListening = true);
 
-        _speechToText.listen(
+        await _speechToText.listen(
           onResult: (result) {
             setState(() {
               _lastWords = result.recognizedWords;
               _textController.text = _lastWords;
             });
 
-            if (result.finalResult) {
-              _stopListening();
+            if (result.finalResult && _lastWords.trim().isNotEmpty) {
+              // Automatically send the message when speech is finalized
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted && _lastWords.trim().isNotEmpty) {
+                  _sendMessage(_lastWords.trim());
+                  _stopListening();
+                }
+              });
             }
           },
           listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 3),
-          partialResults: true, // ignore: deprecated_member_use
-          cancelOnError: true, // ignore: deprecated_member_use
+          pauseFor: const Duration(seconds: 2),
         );
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Speech recognition not available on this device'),
-              duration: Duration(seconds: 2),
+              duration: Duration(seconds: 3),
             ),
           );
         }
       }
-    } else {
-      _stopListening();
+    } catch (e) {
+      print('Error starting speech recognition: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error starting speech recognition: $e'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      setState(() => _isListening = false);
     }
   }
 
   Future<void> _stopListening() async {
     await _speechToText.stop();
-    setState(() => _isListening = false);
+    setState(() {
+      _isListening = false;
+      // Clear the last words when stopping
+      _lastWords = '';
+    });
   }
 
   Widget _buildTypingIndicator() {
@@ -206,6 +440,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  void _showVideoPopup(String videoUrl) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return VideoPlayerDialog(videoUrl: videoUrl);
+      },
+    );
+  }
+
   Widget _buildMessageItem(Message message) {
     final isUser = message.isUser;
     return Align(
@@ -230,10 +473,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SelectableText(
-              message.text,
-              style: TextStyle(color: isUser ? Colors.white : Colors.black87),
-            ),
+            _buildMessageText(message.text, isUser),
             const SizedBox(height: 4),
             Text(
               '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
@@ -246,6 +486,62 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMessageText(String text, bool isUser) {
+    // Simple URL detection and clickable text
+    final urlRegex = RegExp(r'https?://[^\s]+');
+    final matches = urlRegex.allMatches(text);
+
+    if (matches.isEmpty) {
+      return SelectableText(
+        text,
+        style: TextStyle(color: isUser ? Colors.white : Colors.black87),
+      );
+    }
+
+    // Build text spans with clickable URLs
+    final spans = <TextSpan>[];
+    int lastEnd = 0;
+
+    for (final match in matches) {
+      // Add text before the URL
+      if (match.start > lastEnd) {
+        spans.add(
+          TextSpan(
+            text: text.substring(lastEnd, match.start),
+            style: TextStyle(color: isUser ? Colors.white : Colors.black87),
+          ),
+        );
+      }
+
+      // Add clickable URL
+      spans.add(
+        TextSpan(
+          text: match.group(0),
+          style: TextStyle(
+            color: isUser ? Colors.white : Colors.blue,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => _showVideoPopup(match.group(0)!),
+        ),
+      );
+
+      lastEnd = match.end;
+    }
+
+    // Add remaining text
+    if (lastEnd < text.length) {
+      spans.add(
+        TextSpan(
+          text: text.substring(lastEnd),
+          style: TextStyle(color: isUser ? Colors.white : Colors.black87),
+        ),
+      );
+    }
+
+    return SelectableText.rich(TextSpan(children: spans));
   }
 
   Widget _buildInputArea() {
@@ -385,7 +681,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 end: Alignment.bottomRight,
               ).createShader(bounds),
               child: const Text(
-                'AI Assistant',
+                'Sign Language Assistant',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -449,7 +745,219 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ),
               ),
             ),
+            _buildSampleQuestions(),
             _buildInputArea(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSampleQuestions() {
+    final sampleQuestions = [
+      'How do you sign hello?',
+      'What\'s the sign for thank you?',
+      'How to sign please?',
+      'Show me ASL for eat',
+      'What is sign language?',
+    ];
+
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: sampleQuestions.length,
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: ElevatedButton(
+              onPressed: () => _sendMessage(sampleQuestions[index]),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade50,
+                foregroundColor: Colors.blue.shade700,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: Colors.blue.shade200),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              child: Text(sampleQuestions[index]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class VideoPlayerDialog extends StatefulWidget {
+  final String videoUrl;
+
+  const VideoPlayerDialog({super.key, required this.videoUrl});
+
+  @override
+  State<VideoPlayerDialog> createState() => _VideoPlayerDialogState();
+}
+
+class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
+  VideoPlayerController? _videoController;
+  YoutubePlayerController? _youtubeController;
+  bool _isInitialized = false;
+  bool _isPlaying = false;
+  bool _isYouTubeVideo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isYouTubeVideo = _isYouTubeUrl(widget.videoUrl);
+    if (_isYouTubeVideo) {
+      _initializeYouTubePlayer();
+    } else {
+      _initializeVideoPlayer();
+    }
+  }
+
+  bool _isYouTubeUrl(String url) {
+    return url.contains('youtube.com') || url.contains('youtu.be');
+  }
+
+  String? _extractYouTubeVideoId(String url) {
+    // Handle youtube.com URLs
+    if (url.contains('youtube.com/watch?v=')) {
+      return url.split('v=')[1].split('&')[0];
+    }
+    // Handle youtu.be URLs
+    if (url.contains('youtu.be/')) {
+      return url.split('youtu.be/')[1].split('?')[0];
+    }
+    return null;
+  }
+
+  Future<void> _initializeVideoPlayer() async {
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse(widget.videoUrl),
+    );
+    try {
+      await _videoController!.initialize();
+      setState(() {
+        _isInitialized = true;
+      });
+    } catch (e) {
+      print('Error initializing video: $e');
+    }
+  }
+
+  void _initializeYouTubePlayer() {
+    final videoId = _extractYouTubeVideoId(widget.videoUrl);
+    if (videoId != null) {
+      _youtubeController = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags: const YoutubePlayerFlags(
+          autoPlay: false,
+          mute: false,
+          enableCaption: true,
+        ),
+      );
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    _youtubeController?.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayPause() {
+    if (_isYouTubeVideo) {
+      if (_youtubeController!.value.isPlaying) {
+        _youtubeController!.pause();
+      } else {
+        _youtubeController!.play();
+      }
+      setState(() {
+        _isPlaying = _youtubeController!.value.isPlaying;
+      });
+    } else {
+      setState(() {
+        if (_videoController!.value.isPlaying) {
+          _videoController!.pause();
+          _isPlaying = false;
+        } else {
+          _videoController!.play();
+          _isPlaying = true;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.black,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: Column(
+          children: [
+            // Header with close button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            // Video player
+            Expanded(
+              child: _isInitialized
+                  ? _isYouTubeVideo
+                        ? YoutubePlayer(
+                            controller: _youtubeController!,
+                            showVideoProgressIndicator: true,
+                            progressIndicatorColor: Colors.blue,
+                            progressColors: const ProgressBarColors(
+                              playedColor: Colors.blue,
+                              handleColor: Colors.blueAccent,
+                            ),
+                          )
+                        : AspectRatio(
+                            aspectRatio: _videoController!.value.aspectRatio,
+                            child: VideoPlayer(_videoController!),
+                          )
+                  : const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+            ),
+            // Controls (only for non-YouTube videos)
+            if (_isInitialized && !_isYouTubeVideo)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                    onPressed: _togglePlayPause,
+                  ),
+                ],
+              ),
           ],
         ),
       ),
