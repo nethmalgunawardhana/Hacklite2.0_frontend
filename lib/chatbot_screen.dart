@@ -140,15 +140,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     if (isSignLanguageQuery && _knowledgeBank != null) {
       return await _generateSignLanguageResponse(userMessage);
     } else {
-      // Fallback to simple responses for non-sign language queries
-      final responses = [
-        "I understand you're asking about: $userMessage. Let me help you with that.",
-        "That's an interesting question! Based on what you've shared, here's what I think...",
-        "Thanks for your message. I'd be happy to assist you with that.",
-        "I see you mentioned: $userMessage. Here's some information that might help...",
-      ];
-      return responses[DateTime.now().millisecondsSinceEpoch %
-          responses.length];
+      // Only respond to ASL/sign language queries
+      return "I'm here to help with American Sign Language (ASL) questions! Try asking me about signs like 'How do you sign hello?' or 'What's the sign for thank you?'";
     }
   }
 
@@ -248,15 +241,11 @@ Available signs in our knowledge bank: ${signs.map((s) => s['word']).join(', ')}
 
 Categories: ${categories.keys.join(', ')}
 
-Please analyze the user's query and provide helpful information about sign language learning.
-If they ask generally about sign language, provide helpful information.
-If they ask for a category, list the signs in that category.
-If they ask about a specific sign, include the video tutorial URL from the knowledge bank.
+Provide a brief, helpful response about ASL/sign language. Keep it under 100 words.
+If they ask about a specific sign, include the video URL if available.
+If they ask generally, give concise learning tips.
 
-When responding about specific signs, always include the video URL in this format:
-📹 Watch the video tutorial: [URL]
-
-Keep responses concise and helpful.
+Format: Keep responses short and direct.
 ''';
 
       final response = await _model.generateContent([Content.text(prompt)]);
@@ -711,9 +700,55 @@ Keep responses concise and helpful.
                 ),
               ),
             ),
+            _buildSampleQuestions(),
             _buildInputArea(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSampleQuestions() {
+    final sampleQuestions = [
+      'How do you sign hello?',
+      'What\'s the sign for thank you?',
+      'How to sign please?',
+      'Show me ASL for eat',
+      'What is sign language?',
+    ];
+
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: sampleQuestions.length,
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: ElevatedButton(
+              onPressed: () => _sendMessage(sampleQuestions[index]),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade50,
+                foregroundColor: Colors.blue.shade700,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: Colors.blue.shade200),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              child: Text(sampleQuestions[index]),
+            ),
+          );
+        },
       ),
     );
   }
