@@ -374,7 +374,10 @@ Response should be comprehensive but not overwhelming.
 
     // Clean up extra whitespace
     text = text.trim();
-    text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n'); // Replace multiple newlines with double
+    text = text.replaceAll(
+      RegExp(r'\n{3,}'),
+      '\n\n',
+    ); // Replace multiple newlines with double
 
     return text;
   }
