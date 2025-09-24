@@ -100,7 +100,6 @@ flutter:
     - assets/images/logo.svg
     - images/
     - lib/models/sign_language_knowledge_bank.json
-    - assets/.env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
