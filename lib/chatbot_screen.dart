@@ -47,7 +47,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Map<String, dynamic>? _knowledgeBank;
 
   // Gemini AI
-  late GenerativeModel _model;
+  GenerativeModel? _model;
 
   // Chat service
   late ChatService _chatService;
@@ -247,7 +247,14 @@ Examples of non-sign language queries:
 - "Tell me about Flutter development"
 ''';
 
-      final response = await _model.generateContent([Content.text(prompt)]);
+      if (_model == null) {
+        print(
+          'DEBUG: Model not initialized, falling back to keyword detection',
+        );
+        return signKeywords.any((keyword) => lowerMessage.contains(keyword));
+      }
+
+      final response = await _model!.generateContent([Content.text(prompt)]);
       final result = response.text?.toLowerCase().trim() ?? 'false';
       print('DEBUG: AI sign language detection for "$message": $result');
       return result == 'true';
@@ -260,6 +267,12 @@ Examples of non-sign language queries:
   Future<String> _generateSignLanguageResponse(String userMessage) async {
     try {
       print('DEBUG: Generating sign language response for: $userMessage');
+
+      if (_model == null) {
+        print('Error generating sign language response: Model not initialized');
+        return "I'm sorry, I'm currently unable to process your sign language query. Please try again later.";
+      }
+
       final signs = _knowledgeBank!['signs'] as List<dynamic>;
       final categories = _knowledgeBank!['categories'] as Map<String, dynamic>;
 
@@ -286,7 +299,7 @@ Examples:
 Return only the sign name or "GENERAL" (no quotes, no explanation).
 ''';
 
-      final extractionResponse = await _model.generateContent([
+      final extractionResponse = await _model!.generateContent([
         Content.text(signExtractionPrompt),
       ]);
       final extractedSign =
@@ -339,7 +352,7 @@ Keep the response engaging and educational. If they ask about a sign not in our 
 Response should be comprehensive but not overwhelming.
 ''';
 
-      final response = await _model.generateContent([
+      final response = await _model!.generateContent([
         Content.text(generalPrompt),
       ]);
       return response.text ??
