@@ -1,4 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EnvironmentConfig {
   static String get geminiApiKey {
@@ -12,14 +13,34 @@ class EnvironmentConfig {
     return dotenv.env['GEMINI_API_KEY'] ?? '';
   }
 
-  static String get aslBackendUrl {
-    // First try to get from environment variables
+  static Future<String> get aslBackendUrl async {
+    // Check if user has saved a custom URL in SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedUrl = prefs.getString('asl_backend_url');
+      if (savedUrl != null && savedUrl.isNotEmpty) {
+        return savedUrl;
+      }
+    } catch (e) {
+      print('Warning: Could not load saved backend URL: $e');
+    }
+
+    // Fall back to environment variable
     final envUrl = const String.fromEnvironment('ASL_BACKEND_URL');
     if (envUrl.isNotEmpty) {
       return envUrl;
     }
 
     // Fall back to .env file
+    return dotenv.env['ASL_BACKEND_URL'] ?? 'http://localhost:5000';
+  }
+
+  // Synchronous version for existing code (uses .env only)
+  static String get aslBackendUrlSync {
+    final envUrl = const String.fromEnvironment('ASL_BACKEND_URL');
+    if (envUrl.isNotEmpty) {
+      return envUrl;
+    }
     return dotenv.env['ASL_BACKEND_URL'] ?? 'http://localhost:5000';
   }
 

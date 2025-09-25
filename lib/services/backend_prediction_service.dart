@@ -27,14 +27,14 @@ class BackendPredictionService {
 
   // Configuration
   static const Duration defaultUploadInterval = Duration(
-    milliseconds: 2000,
-  ); // 0.5 FPS (2000ms interval)
+    milliseconds: 500,
+  ); // 2 FPS (500ms interval) - optimal for ASL detection
   static const Duration minUploadInterval = Duration(
     milliseconds: 200,
   ); // 5 FPS max
   static const Duration maxUploadInterval = Duration(
-    milliseconds: 1000,
-  ); // 1 FPS min
+    milliseconds: 2000,
+  ); // 0.5 FPS min
   static const int targetImageSize = 200; // 200x200 as specified
   static const int retryAttempts = 3;
   static const Duration retryDelay = Duration(seconds: 2);
@@ -220,14 +220,14 @@ class BackendPredictionService {
         throw Exception('Failed to convert image');
       }
 
-      // Prepare multipart request
+      // Prepare multipart request matching Flask backend expectations
       final formData = FormData.fromMap({
         'image': MultipartFile.fromBytes(
           jpegBytes,
           filename: 'frame.jpg',
           contentType: MediaType('image', 'jpeg'),
         ),
-        'session_id': _sessionId,
+        if (_sessionId != null) 'session_id': _sessionId,
       });
 
       // Make API call with retry logic
@@ -262,7 +262,7 @@ class BackendPredictionService {
     for (int attempt = 1; attempt <= retryAttempts; attempt++) {
       try {
         final response = await _dio.post(
-          '${EnvironmentConfig.aslBackendUrl}/predict-image',
+          '${EnvironmentConfig.aslBackendUrlSync}/predict-image',
           data: formData,
         );
         return response;
@@ -309,8 +309,8 @@ class BackendPredictionService {
         interpolation: img.Interpolation.linear,
       );
 
-      // Convert to JPEG
-      final jpegBytes = img.encodeJpg(resized, quality: 85);
+      // Convert to JPEG with high quality for better ASL recognition
+      final jpegBytes = img.encodeJpg(resized, quality: 90);
 
       return Uint8List.fromList(jpegBytes);
     } catch (e) {
@@ -528,7 +528,7 @@ class BackendPredictionService {
     _healthCheckTimer = Timer.periodic(healthCheckInterval, (timer) async {
       try {
         final response = await _dio.get(
-          '${EnvironmentConfig.aslBackendUrl}/health',
+          '${EnvironmentConfig.aslBackendUrlSync}/health',
         );
         _isServerHealthy = response.statusCode == 200;
       } catch (e) {
@@ -582,6 +582,8 @@ class BackendPredictionService {
           : 0,
       'currentFPS': 1000 ~/ _currentUploadInterval.inMilliseconds,
       'totalUploads': totalUploads,
+      'backendUrl': EnvironmentConfig.aslBackendUrlSync,
+      'sessionId': _sessionId,
     };
   }
 

@@ -4,8 +4,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 
 import 'services/asl_detection_service_v2.dart';
-import 'services/environment_config.dart';
 import 'models/asl_prediction.dart';
+import 'settings_page.dart';
 
 class CameraPageV2 extends StatefulWidget {
   const CameraPageV2({super.key});
@@ -18,7 +18,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
   CameraController? _controller;
   List<CameraDescription>? cameras;
   bool _isCameraInitialized = false;
-  bool _isPermissionGranted = false;
   String _translationText = "Backend ASL prediction ready...";
   String _statusText = "Initializing camera...";
   int _currentCameraIndex = 0;
@@ -84,7 +83,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
 
     if (cameraStatus.isGranted) {
       setState(() {
-        _isPermissionGranted = true;
         _statusText = "Permissions granted. Initializing camera...";
       });
       _initializeCamera();
@@ -150,7 +148,7 @@ class _CameraPageV2State extends State<CameraPageV2> {
     setState(() {
       _isDetecting = true;
       _translationText =
-          "🔍 Starting backend ASL detection...\nShow your hand signs to the camera.";
+          "🔍 Starting ASL detection (2 FPS)...\nShow your hand signs to the camera.";
       _assembledText = "";
       _currentPrediction = "";
       _currentConfidence = 0.0;
@@ -229,7 +227,7 @@ class _CameraPageV2State extends State<CameraPageV2> {
   void _updateTranslationText(ASLPrediction prediction) {
     final networkInfo = _formatNetworkStats();
     _translationText =
-        "🎯 Current: ${prediction.letter}\n"
+        "🎯 Current: ${prediction.letter.toUpperCase()}\n"
         "📈 Confidence: ${(prediction.confidence * 100).toStringAsFixed(1)}%\n"
         "🕒 Time: ${prediction.timestamp.toString().substring(11, 19)}\n"
         "$networkInfo";
@@ -239,8 +237,8 @@ class _CameraPageV2State extends State<CameraPageV2> {
     // Update translation text to show assembled text
     final networkInfo = _formatNetworkStats();
     _translationText =
-        "📝 Assembled Text: $_assembledText\n"
-        "🎯 Last: $_currentPrediction (${(_currentConfidence * 100).toStringAsFixed(1)}%)\n"
+        "📝 Assembled: $_assembledText\n"
+        "🎯 Last: ${_currentPrediction.toUpperCase()} (${(_currentConfidence * 100).toStringAsFixed(1)}%)\n"
         "$networkInfo";
   }
 
@@ -262,10 +260,18 @@ class _CameraPageV2State extends State<CameraPageV2> {
     final isHealthy = _networkStats['isServerHealthy'] ?? true;
     final latency = _networkStats['averageLatency'] ?? 0;
     final successRate = _networkStats['successRate'] ?? 0;
-    final interval = 2000; // Fixed 2000ms interval
+    final fps = _networkStats['currentFPS'] ?? 2;
+    final backendUrl = _networkStats['backendUrl'] ?? 'Unknown';
 
     final healthIcon = isHealthy ? "🟢" : "🔴";
-    return "$healthIcon ${latency}ms • ${successRate}% • ${interval}ms";
+    return "$healthIcon ${latency}ms • ${successRate}% • ${fps}FPS\n🌐 ${_shortenUrl(backendUrl)}";
+  }
+
+  String _shortenUrl(String url) {
+    if (url.length > 30) {
+      return '${url.substring(0, 27)}...';
+    }
+    return url;
   }
 
   @override
@@ -298,6 +304,19 @@ class _CameraPageV2State extends State<CameraPageV2> {
                           color: Colors.white,
                         ),
                       ),
+                    ),
+                    // Settings button
+                    IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.settings, color: Colors.white),
+                      tooltip: 'Backend Settings',
                     ),
                     if (_aslService.isUsingMockMode)
                       Container(
