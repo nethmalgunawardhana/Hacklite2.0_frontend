@@ -18,7 +18,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
   CameraController? _controller;
   List<CameraDescription>? cameras;
   bool _isCameraInitialized = false;
-  String _translationText = "Backend ASL prediction ready...";
   String _statusText = "Initializing camera...";
   int _currentCameraIndex = 0;
 
@@ -28,6 +27,8 @@ class _CameraPageV2State extends State<CameraPageV2> {
   String _currentPrediction = "";
   double _currentConfidence = 0.0;
   String _assembledText = "";
+  bool _isAssembledTextExpanded =
+      true; // Controls assembled text panel visibility
 
   // Network status
   Map<String, dynamic> _networkStats = {};
@@ -112,8 +113,9 @@ class _CameraPageV2State extends State<CameraPageV2> {
 
         _controller = CameraController(
           cameras![_currentCameraIndex],
-          ResolutionPreset.medium, // Medium resolution for better performance
+          ResolutionPreset.high, // High resolution for better ASL detection
           enableAudio: false,
+          imageFormatGroup: ImageFormatGroup.jpeg, // Ensure color JPEG format
         );
 
         await _controller!.initialize();
@@ -142,14 +144,22 @@ class _CameraPageV2State extends State<CameraPageV2> {
     await _initializeCamera();
   }
 
+  void _clearAssembledText() {
+    setState(() {
+      _assembledText = "";
+    });
+    // Clear the backend service's assembled text state
+    _aslService.clearAssembledText();
+  }
+
   void _startDetection() async {
     if (!_isCameraInitialized || _isDetecting) return;
 
+    // Clear previous assembled text when starting new detection
+    _clearAssembledText();
+
     setState(() {
       _isDetecting = true;
-      _translationText =
-          "🔍 Starting ASL detection (2 FPS)...\nShow your hand signs to the camera.";
-      _assembledText = "";
       _currentPrediction = "";
       _currentConfidence = 0.0;
     });
@@ -171,7 +181,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
         setState(() {
           _currentPrediction = prediction.letter;
           _currentConfidence = prediction.confidence;
-          _updateTranslationText(prediction);
         });
       });
 
@@ -180,7 +189,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
       ) {
         setState(() {
           _assembledText = text;
-          _updateAssembledTextDisplay();
         });
       });
 
@@ -199,7 +207,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
       print('❌ Error starting detection: $e');
       setState(() {
         _isDetecting = false;
-        _translationText = "❌ Failed to start detection: $e";
       });
       _controller?.stopImageStream();
     }
@@ -210,8 +217,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
 
     setState(() {
       _isDetecting = false;
-      _translationText =
-          "Backend ASL detection stopped.\n\nFinal text: $_assembledText";
     });
 
     _aslService.stopDetection();
@@ -222,24 +227,6 @@ class _CameraPageV2State extends State<CameraPageV2> {
     _assembledTextSubscription?.cancel();
     _networkStatsSubscription?.cancel();
     _networkStatsTimer?.cancel();
-  }
-
-  void _updateTranslationText(ASLPrediction prediction) {
-    final networkInfo = _formatNetworkStats();
-    _translationText =
-        "🎯 Current: ${prediction.letter.toUpperCase()}\n"
-        "📈 Confidence: ${(prediction.confidence * 100).toStringAsFixed(1)}%\n"
-        "🕒 Time: ${prediction.timestamp.toString().substring(11, 19)}\n"
-        "$networkInfo";
-  }
-
-  void _updateAssembledTextDisplay() {
-    // Update translation text to show assembled text
-    final networkInfo = _formatNetworkStats();
-    _translationText =
-        "📝 Assembled: $_assembledText\n"
-        "🎯 Last: ${_currentPrediction.toUpperCase()} (${(_currentConfidence * 100).toStringAsFixed(1)}%)\n"
-        "$networkInfo";
   }
 
   void _startNetworkStatsMonitoring() {
@@ -286,321 +273,261 @@ class _CameraPageV2State extends State<CameraPageV2> {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    const Icon(Icons.camera_alt, color: Colors.white, size: 28),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Backend ASL Detection',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+              // Full Screen Camera Preview
+              _isCameraInitialized
+                  ? Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(0),
+                        child: CameraPreview(_controller!),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.black,
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 64,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Camera Initializing...',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    // Settings button
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SettingsPage(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.settings, color: Colors.white),
-                      tooltip: 'Backend Settings',
+
+              // Header Overlay
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.7),
+                        Colors.transparent,
+                      ],
                     ),
-                    if (_aslService.isUsingMockMode)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.camera_alt,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'ASL Detection',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
+                      ),
+                      // Settings button
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.settings,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        tooltip: 'Settings',
+                      ),
+                      // Camera switch button
+                      if (cameras != null && cameras!.length > 1)
+                        IconButton(
+                          onPressed: _switchCamera,
+                          icon: const Icon(
+                            Icons.flip_camera_ios,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          tooltip: 'Switch Camera',
+                        ),
+                      if (_aslService.isUsingMockMode)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'MOCK',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Status and Prediction Overlay
+              Positioned(
+                top: 80,
+                left: 16,
+                right: 16,
+                child: Column(
+                  children: [
+                    // Status message
+                    if (_statusText.isNotEmpty && !_isCameraInitialized)
+                      Container(
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.orange,
+                          color: Colors.black.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'MOCK',
-                          style: TextStyle(
+                        child: Text(
+                          _statusText,
+                          style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
                           ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+
+                    // Live prediction display
+                    if (_isDetecting && _currentPrediction.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              _currentPrediction.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${(_currentConfidence * 100).toStringAsFixed(1)}% confidence',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
                 ),
               ),
 
-              // Camera Preview
-              Expanded(
-                flex: 2,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: _isCameraInitialized
-                        ? Stack(
-                            children: [
-                              CameraPreview(_controller!),
-                              // Status overlay
-                              if (_statusText.isNotEmpty)
-                                Positioned(
-                                  top: 16,
-                                  left: 16,
-                                  right: 16,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.7),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      _statusText,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              // Detection status
-                              if (_isDetecting)
-                                Positioned(
-                                  bottom: 16,
-                                  right: 16,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.fiber_manual_record,
-                                          color: Colors.white,
-                                          size: 12,
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'LIVE',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              // Camera switch button
-                              if (cameras != null && cameras!.length > 1)
-                                Positioned(
-                                  top: 16,
-                                  right: 16,
-                                  child: GestureDetector(
-                                    onTap: _switchCamera,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.5),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: const Icon(
-                                        Icons.flip_camera_ios,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          )
-                        : Container(
-                            color: Colors.black,
-                            child: const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.white,
-                                    size: 64,
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Camera Initializing...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+              // Detection Status Indicator
+              if (_isDetecting)
+                Positioned(
+                  top: 80,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.fiber_manual_record,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'LIVE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              // Controls and Results
-              Expanded(
-                flex: 2,
+              // Bottom Panel with Controls and Results
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
                 child: Container(
-                  margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withOpacity(0.2),
                         blurRadius: 20,
-                        offset: const Offset(0, 8),
+                        offset: const Offset(0, -5),
                       ),
                     ],
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Header with network status
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4facfe).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Icon(
-                                Icons.translate,
-                                color: Color(0xFF4facfe),
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            const Expanded(
-                              child: Text(
-                                'Backend Translation',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                            if (_networkStats.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (_networkStats['isServerHealthy'] ?? true)
-                                      ? Colors.green.withOpacity(0.1)
-                                      : Colors.red.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _formatNetworkStats(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color:
-                                        (_networkStats['isServerHealthy'] ??
-                                            true)
-                                        ? Colors.green.shade700
-                                        : Colors.red.shade700,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Translation Results
+                        // Drag Handle
                         Container(
-                          height: 100,
-                          padding: const EdgeInsets.all(16),
+                          width: 40,
+                          height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey[200]!),
-                          ),
-                          child: SingleChildScrollView(
-                            child: Text(
-                              _translationText,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black87,
-                                height: 1.4,
-                              ),
-                            ),
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        // Assembled Text Display
-                        if (_assembledText.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Assembled Text:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _assembledText,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        const Spacer(),
 
                         // Control Buttons
                         Row(
@@ -610,13 +537,19 @@ class _CameraPageV2State extends State<CameraPageV2> {
                                 onPressed: _isCameraInitialized && !_isDetecting
                                     ? _startDetection
                                     : null,
-                                icon: const Icon(Icons.play_arrow, size: 20),
-                                label: const Text('Start Detection'),
+                                icon: const Icon(Icons.play_arrow, size: 24),
+                                label: const Text(
+                                  'Start Detection',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
+                                    vertical: 16,
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -629,13 +562,19 @@ class _CameraPageV2State extends State<CameraPageV2> {
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: _isDetecting ? _stopDetection : null,
-                                icon: const Icon(Icons.stop, size: 20),
-                                label: const Text('Stop'),
+                                icon: const Icon(Icons.stop, size: 24),
+                                label: const Text(
+                                  'Stop',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
+                                    vertical: 16,
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -646,6 +585,148 @@ class _CameraPageV2State extends State<CameraPageV2> {
                             ),
                           ],
                         ),
+
+                        const SizedBox(height: 16),
+
+                        // Assembled Text Display with collapsible panel
+                        if (_assembledText.isNotEmpty)
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Header with expand/collapse and clear button
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _isAssembledTextExpanded =
+                                          !_isAssembledTextExpanded;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Row(
+                                      children: [
+                                        const Text(
+                                          'Translated Text:',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        // Clear button
+                                        InkWell(
+                                          onTap: _clearAssembledText,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(
+                                                0.2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.clear,
+                                                  size: 14,
+                                                  color: Colors.white,
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  'Clear',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        // Expand/collapse button
+                                        Icon(
+                                          _isAssembledTextExpanded
+                                              ? Icons.expand_less
+                                              : Icons.expand_more,
+                                          color: Colors.white70,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                // Collapsible text content
+                                if (_isAssembledTextExpanded)
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      0,
+                                      16,
+                                      16,
+                                    ),
+                                    child: Text(
+                                      _assembledText,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+
+                        // Network Status
+                        if (_networkStats.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: (_networkStats['isServerHealthy'] ?? true)
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color:
+                                    (_networkStats['isServerHealthy'] ?? true)
+                                    ? Colors.green.withOpacity(0.3)
+                                    : Colors.red.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Text(
+                              _formatNetworkStats(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color:
+                                    (_networkStats['isServerHealthy'] ?? true)
+                                    ? Colors.green.shade700
+                                    : Colors.red.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                       ],
                     ),
                   ),

@@ -139,6 +139,13 @@ class ASLDetectionServiceV2 {
   /// Check if using mock mode
   bool get isUsingMockMode => EnvironmentConfig.useLocalMock;
 
+  /// Clear current assembled text
+  void clearAssembledText() {
+    _currentAssembledText = '';
+    _backendService?.clearAssembledText();
+    _assembledTextStreamController?.add('');
+  }
+
   /// Legacy method for backward compatibility - single frame detection
   Future<ASLPrediction?> detectGestureFromCamera({
     CameraImage? cameraImage,

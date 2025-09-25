@@ -214,11 +214,19 @@ class BackendPredictionService {
     final stopwatch = Stopwatch()..start();
 
     try {
+      // Log image format for debugging
+      print(
+        '📸 Processing image: ${cameraImage.width}x${cameraImage.height}, '
+        'format: ${cameraImage.format.group}, planes: ${cameraImage.planes.length}',
+      );
+
       // Convert and resize image
       final jpegBytes = await _convertAndResizeImage(cameraImage);
       if (jpegBytes == null) {
         throw Exception('Failed to convert image');
       }
+
+      print('📤 Uploading ${jpegBytes.length} bytes JPEG image to backend');
 
       // Prepare multipart request matching Flask backend expectations
       final formData = FormData.fromMap({
@@ -290,9 +298,12 @@ class BackendPredictionService {
       img.Image? image;
 
       if (cameraImage.format.group == ImageFormatGroup.yuv420) {
-        image = await _convertYuv420Simple(cameraImage);
+        image = await _convertYuv420ToColor(cameraImage);
       } else if (cameraImage.format.group == ImageFormatGroup.bgra8888) {
         image = await _convertBgraToRgb(cameraImage);
+      } else if (cameraImage.format.group == ImageFormatGroup.jpeg) {
+        // Direct JPEG format - decode it
+        image = img.decodeImage(cameraImage.planes[0].bytes);
       } else {
         image = await _convertUnknownFormat(cameraImage);
       }
@@ -301,16 +312,23 @@ class BackendPredictionService {
         throw Exception('Failed to convert camera image format');
       }
 
-      // Resize to target size
+      // Apply orientation correction - test if backend receives rotated images
+      // If backend receives images rotated 90° clockwise, uncomment the next line:
+      image = img.copyRotate(
+        image,
+        angle: -90,
+      ); // Rotate counter-clockwise by 90°
+
+      // Resize to target size with high quality interpolation
       final resized = img.copyResize(
         image,
         width: targetImageSize,
         height: targetImageSize,
-        interpolation: img.Interpolation.linear,
+        interpolation: img.Interpolation.cubic, // Higher quality interpolation
       );
 
-      // Convert to JPEG with high quality for better ASL recognition
-      final jpegBytes = img.encodeJpg(resized, quality: 90);
+      // Convert to JPEG with high quality for better ASL recognition (95% quality)
+      final jpegBytes = img.encodeJpg(resized, quality: 95);
 
       return Uint8List.fromList(jpegBytes);
     } catch (e) {
@@ -319,7 +337,59 @@ class BackendPredictionService {
     }
   }
 
-  /// Simple YUV420 to RGB conversion focusing on the Y (luminance) channel
+  /// Enhanced YUV420 to RGB conversion for full color processing
+  Future<img.Image?> _convertYuv420ToColor(CameraImage cameraImage) async {
+    try {
+      final int width = cameraImage.width;
+      final int height = cameraImage.height;
+
+      final yPlane = cameraImage.planes[0];
+      final uPlane = cameraImage.planes[1];
+      final vPlane = cameraImage.planes[2];
+
+      final yBytes = yPlane.bytes;
+      final uBytes = uPlane.bytes;
+      final vBytes = vPlane.bytes;
+
+      final image = img.Image(width: width, height: height);
+
+      // YUV420 to RGB conversion with proper color processing
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final yIndex = y * yPlane.bytesPerRow + x;
+          final uvPixelStride = uPlane.bytesPerPixel ?? 1;
+          final uvIndex =
+              (y ~/ 2) * uPlane.bytesPerRow + (x ~/ 2) * uvPixelStride;
+
+          if (yIndex < yBytes.length &&
+              uvIndex < uBytes.length &&
+              uvIndex < vBytes.length) {
+            final yVal = yBytes[yIndex];
+            final uVal = uBytes[uvIndex] - 128;
+            final vVal = vBytes[uvIndex] - 128;
+
+            // YUV to RGB conversion formulas
+            final r = (yVal + 1.402 * vVal).clamp(0, 255).toInt();
+            final g = (yVal - 0.344136 * uVal - 0.714136 * vVal)
+                .clamp(0, 255)
+                .toInt();
+            final b = (yVal + 1.772 * uVal).clamp(0, 255).toInt();
+
+            image.setPixelRgb(x, y, r, g, b);
+          }
+        }
+      }
+
+      print('✅ Converted YUV420 to full color RGB image (${width}x${height})');
+      return image;
+    } catch (e) {
+      print('❌ Error converting YUV420 to color: $e');
+      // Fallback to simple grayscale conversion
+      return _convertYuv420Simple(cameraImage);
+    }
+  }
+
+  /// Simple YUV420 to RGB conversion (fallback method)
   Future<img.Image?> _convertYuv420Simple(CameraImage cameraImage) async {
     try {
       final int width = cameraImage.width;
@@ -331,28 +401,26 @@ class BackendPredictionService {
 
       final image = img.Image(width: width, height: height);
 
-      // For now, use only the Y (luminance) channel and ignore UV for simplicity
-      // This creates a grayscale image which works well for ASL detection
+      // Use only the Y (luminance) channel for grayscale fallback
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           final yIndex = y * yRowStride + x;
 
           if (yIndex < yBytes.length) {
             final luminance = yBytes[yIndex];
-            // Use luminance for all RGB channels to create grayscale
             image.setPixelRgb(x, y, luminance, luminance, luminance);
           }
         }
       }
 
+      print('⚠️ Using YUV420 grayscale fallback conversion');
       return image;
     } catch (e) {
-      print('❌ Error converting YUV420: $e');
+      print('❌ Error in YUV420 simple conversion: $e');
       return null;
     }
   }
 
-  /// Convert BGRA format to RGB
   Future<img.Image?> _convertBgraToRgb(CameraImage cameraImage) async {
     try {
       final int width = cameraImage.width;
@@ -370,13 +438,15 @@ class BackendPredictionService {
             final b = bytes[pixelIndex];
             final g = bytes[pixelIndex + 1];
             final r = bytes[pixelIndex + 2];
-            // Alpha at pixelIndex + 3 (ignored)
+            final a = bytes[pixelIndex + 3]; // Alpha channel
 
-            image.setPixelRgb(x, y, r, g, b);
+            // Use alpha channel for proper color blending if needed
+            image.setPixelRgba(x, y, r, g, b, a);
           }
         }
       }
 
+      print('✅ Converted BGRA to RGB image (${width}x${height})');
       return image;
     } catch (e) {
       print('❌ Error converting BGRA: $e');
@@ -585,6 +655,34 @@ class BackendPredictionService {
       'backendUrl': EnvironmentConfig.aslBackendUrlSync,
       'sessionId': _sessionId,
     };
+  }
+
+  /// Clear assembled text state
+  void clearAssembledText() {
+    _lastAssembledText = '';
+  }
+
+  /// Test and save a captured image for quality verification (DEBUG ONLY)
+  Future<void> testImageCapture(CameraImage cameraImage) async {
+    try {
+      final jpegBytes = await _convertAndResizeImage(cameraImage);
+      if (jpegBytes != null) {
+        print('🔍 Image test results:');
+        print('   - Original: ${cameraImage.width}x${cameraImage.height}');
+        print('   - Format: ${cameraImage.format.group}');
+        print('   - Planes: ${cameraImage.planes.length}');
+        print('   - JPEG size: ${jpegBytes.length} bytes');
+        print('   - Target size: ${targetImageSize}x${targetImageSize}');
+
+        // TODO: Uncomment to save test image to device storage
+        // final directory = await getApplicationDocumentsDirectory();
+        // final file = File('${directory.path}/test_capture_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        // await file.writeAsBytes(jpegBytes);
+        // print('   - Saved to: ${file.path}');
+      }
+    } catch (e) {
+      print('❌ Image test failed: $e');
+    }
   }
 
   /// Dispose resources
