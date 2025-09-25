@@ -17,7 +17,6 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-
 class _DashboardPageState extends State<DashboardPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
@@ -71,6 +70,7 @@ class _DashboardPageState extends State<DashboardPage>
   @override
   void dispose() {
     _pulseController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -313,7 +313,6 @@ class _DashboardPageState extends State<DashboardPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       backgroundColor: Colors.grey[100],
       floatingActionButton: Container(
         margin: const EdgeInsets.only(bottom: 16, right: 16),
@@ -431,7 +430,8 @@ class _DashboardPageState extends State<DashboardPage>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                user?.displayName?.split(' ').first ?? 'Learner',
+                                user?.displayName?.split(' ').first ??
+                                    'Learner',
                                 style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
@@ -442,11 +442,16 @@ class _DashboardPageState extends State<DashboardPage>
                           ),
                           // avatar with subtle glow pulse
                           ScaleTransition(
-                            scale: Tween(begin: 0.98, end: 1.02).animate(_pulseController),
+                            scale: Tween(
+                              begin: 0.98,
+                              end: 1.02,
+                            ).animate(_pulseController),
                             child: CircleAvatar(
                               radius: 32,
                               backgroundColor: Colors.white24,
-                              backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+                              backgroundImage: user?.photoURL != null
+                                  ? NetworkImage(user!.photoURL!)
+                                  : null,
                               child: user?.photoURL == null
                                   ? const Icon(
                                       Icons.waving_hand,
@@ -478,7 +483,11 @@ class _DashboardPageState extends State<DashboardPage>
                                 widget.onNavigateToCamera!();
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Switch to Camera tab to start translating!')),
+                                  const SnackBar(
+                                    content: Text(
+                                      'Switch to Camera tab to start translating!',
+                                    ),
+                                  ),
                                 );
                               }
                             },
@@ -486,7 +495,9 @@ class _DashboardPageState extends State<DashboardPage>
                             label: const Text('Live Translate'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white24,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                               elevation: 0,
                             ),
                           ),
@@ -523,7 +534,9 @@ class _DashboardPageState extends State<DashboardPage>
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Switch to Camera tab to start translating!'),
+                                content: Text(
+                                  'Switch to Camera tab to start translating!',
+                                ),
                               ),
                             );
                           }
@@ -537,7 +550,9 @@ class _DashboardPageState extends State<DashboardPage>
                         () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const QuizSelectorPage()),
+                            MaterialPageRoute(
+                              builder: (context) => const QuizSelectorPage(),
+                            ),
                           );
                         },
                       ),
@@ -549,7 +564,9 @@ class _DashboardPageState extends State<DashboardPage>
                         () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SignDictionaryPage()),
+                            MaterialPageRoute(
+                              builder: (context) => const SignDictionaryPage(),
+                            ),
                           );
                         },
                       ),
@@ -576,7 +593,12 @@ class _DashboardPageState extends State<DashboardPage>
                         Icons.flag,
                         [Colors.indigo.shade400, Colors.indigo.shade200],
                         () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const GoalSettingPage()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const GoalSettingPage(),
+                            ),
+                          );
                         },
                       ),
                       _buildGradientQuickAction(
@@ -585,7 +607,12 @@ class _DashboardPageState extends State<DashboardPage>
                         Icons.leaderboard,
                         [Colors.amber.shade600, Colors.amber.shade300],
                         () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const LeaderboardPage()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LeaderboardPage(),
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -636,7 +663,7 @@ class _DashboardPageState extends State<DashboardPage>
           onPressed: () {},
           icon: const Icon(Icons.info_outline, color: Colors.grey),
           tooltip: 'Tips',
-        )
+        ),
       ],
     );
   }
@@ -654,9 +681,19 @@ class _DashboardPageState extends State<DashboardPage>
         width: MediaQuery.of(context).size.width / 2 - 30,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
+          gradient: LinearGradient(
+            colors: colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: colors.first.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 6))],
+          boxShadow: [
+            BoxShadow(
+              color: colors.first.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,9 +704,18 @@ class _DashboardPageState extends State<DashboardPage>
               child: Icon(icon, color: Colors.white, size: 22),
             ),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Text(
+              subtitle,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
           ],
         ),
       ),
@@ -702,9 +748,15 @@ class _DashboardPageState extends State<DashboardPage>
             children: const [
               Icon(Icons.timeline, size: 48, color: Colors.grey),
               SizedBox(height: 12),
-              Text('No recent activities yet', style: TextStyle(fontSize: 16, color: Colors.grey)),
+              Text(
+                'No recent activities yet',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
               SizedBox(height: 6),
-              Text('Start learning to see your progress!', style: TextStyle(fontSize: 14, color: Colors.grey)),
+              Text(
+                'Start learning to see your progress!',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -722,17 +774,30 @@ class _DashboardPageState extends State<DashboardPage>
               height: 44,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [activity['color'].withOpacity(0.9), activity['color'].withOpacity(0.6)],
+                  colors: [
+                    activity['color'].withOpacity(0.9),
+                    activity['color'].withOpacity(0.6),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(activity['icon'] as IconData, color: Colors.white, size: 20),
+              child: Icon(
+                activity['icon'] as IconData,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
-            title: Text(activity['title'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
+            title: Text(
+              activity['title'] as String,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             subtitle: Text(activity['subtitle'] as String),
-            trailing: Text(activity['time'] as String, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            trailing: Text(
+              activity['time'] as String,
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
             onTap: () {},
           );
         }).toList(),
@@ -759,19 +824,34 @@ class _DashboardPageState extends State<DashboardPage>
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [Colors.purple.shade300, Colors.purple.shade100]),
+                  gradient: LinearGradient(
+                    colors: [Colors.purple.shade300, Colors.purple.shade100],
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.sign_language, color: Colors.white, size: 34),
+                child: const Icon(
+                  Icons.sign_language,
+                  color: Colors.white,
+                  size: 34,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
-                    Text('Advanced Fingerspelling', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Advanced Fingerspelling',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     SizedBox(height: 6),
-                    Text('Master the art of spelling words with your hands', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                    Text(
+                      'Master the art of spelling words with your hands',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
@@ -795,14 +875,26 @@ class _DashboardPageState extends State<DashboardPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Quiz Performance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Quiz Performance',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _getPerformanceColor().withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(_getPerformanceText(), style: TextStyle(color: _getPerformanceColor(), fontWeight: FontWeight.bold)),
+                  child: Text(
+                    _getPerformanceText(),
+                    style: TextStyle(
+                      color: _getPerformanceColor(),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -810,9 +902,23 @@ class _DashboardPageState extends State<DashboardPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildAnimatedStatItem('Quizzes\nTaken', isLoadingStats ? 0 : quizzesTaken, Colors.blue),
-                _buildAnimatedStatItem('Average\nScore', isLoadingStats ? 0 : (animatedAverage.toInt()), Colors.green, suffix: '%'),
-                _buildAnimatedStatItem('Best\nScore', isLoadingStats ? 0 : bestScore, Colors.orange, suffix: '%'),
+                _buildAnimatedStatItem(
+                  'Quizzes\nTaken',
+                  isLoadingStats ? 0 : quizzesTaken,
+                  Colors.blue,
+                ),
+                _buildAnimatedStatItem(
+                  'Average\nScore',
+                  isLoadingStats ? 0 : (animatedAverage.toInt()),
+                  Colors.green,
+                  suffix: '%',
+                ),
+                _buildAnimatedStatItem(
+                  'Best\nScore',
+                  isLoadingStats ? 0 : bestScore,
+                  Colors.orange,
+                  suffix: '%',
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -823,30 +929,43 @@ class _DashboardPageState extends State<DashboardPage>
                 children: [
                   Expanded(
                     child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0, end: _getOverallProgressValue()),
+                      tween: Tween<double>(
+                        begin: 0,
+                        end: _getOverallProgressValue(),
+                      ),
                       duration: const Duration(milliseconds: 900),
                       builder: (context, value, child) {
                         return LinearProgressIndicator(
                           value: value,
                           backgroundColor: Colors.grey[200],
-                          valueColor: AlwaysStoppedAnimation<Color>(_getOverallProgressColor()),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _getOverallProgressColor(),
+                          ),
                           minHeight: 6,
                         );
                       },
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text('${(_getOverallProgressValue() * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    '${(_getOverallProgressValue() * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAnimatedStatItem(String label, int value, Color color, {String suffix = ''}) {
+  Widget _buildAnimatedStatItem(
+    String label,
+    int value,
+    Color color, {
+    String suffix = '',
+  }) {
     return Column(
       children: [
         TweenAnimationBuilder<int>(
@@ -855,12 +974,20 @@ class _DashboardPageState extends State<DashboardPage>
           builder: (context, val, child) {
             return Text(
               '$val$suffix',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             );
           },
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }
@@ -873,7 +1000,9 @@ class _DashboardPageState extends State<DashboardPage>
         child: const Padding(
           padding: EdgeInsets.all(28),
           child: Center(
-            child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe))),
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+            ),
           ),
         ),
       );
@@ -891,14 +1020,27 @@ class _DashboardPageState extends State<DashboardPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Today\'s Progress', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Today\'s Progress',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _getOverallProgressColor().withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(_getOverallProgressText(), style: TextStyle(color: _getOverallProgressColor(), fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: Text(
+                    _getOverallProgressText(),
+                    style: TextStyle(
+                      color: _getOverallProgressColor(),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -906,9 +1048,27 @@ class _DashboardPageState extends State<DashboardPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildGoalProgressItem('Signs Learned', signsLearnedToday, dailySignGoal, Icons.sign_language, Colors.teal),
-                _buildGoalProgressItem('Practice Time', practiceMinutesToday, dailyPracticeMinutes, Icons.timer, Colors.orange),
-                _buildGoalProgressItem('Quizzes Done', quizzesCompletedToday, dailyQuizGoal, Icons.quiz, Colors.purple),
+                _buildGoalProgressItem(
+                  'Signs Learned',
+                  signsLearnedToday,
+                  dailySignGoal,
+                  Icons.sign_language,
+                  Colors.teal,
+                ),
+                _buildGoalProgressItem(
+                  'Practice Time',
+                  practiceMinutesToday,
+                  dailyPracticeMinutes,
+                  Icons.timer,
+                  Colors.orange,
+                ),
+                _buildGoalProgressItem(
+                  'Quizzes Done',
+                  quizzesCompletedToday,
+                  dailyQuizGoal,
+                  Icons.quiz,
+                  Colors.purple,
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -925,11 +1085,16 @@ class _DashboardPageState extends State<DashboardPage>
                         value: value,
                         minHeight: 10,
                         backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(_getOverallProgressColor()),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _getOverallProgressColor(),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text('${(value * 100).toStringAsFixed(0)}% of today\'s goals completed', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    Text(
+                      '${(value * 100).toStringAsFixed(0)}% of today\'s goals completed',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
                   ],
                 );
               },
@@ -963,10 +1128,18 @@ class _DashboardPageState extends State<DashboardPage>
         const SizedBox(height: 8),
         Text(
           '$current/$target',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isCompleted ? color : Colors.black87),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isCompleted ? color : Colors.black87,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey), textAlign: TextAlign.center),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 6),
         SizedBox(
           width: 52,
@@ -989,9 +1162,15 @@ class _DashboardPageState extends State<DashboardPage>
       return 0.0;
     }
 
-    final signProgress = dailySignGoal > 0 ? (signsLearnedToday / dailySignGoal).clamp(0.0, 1.0) : 0.0;
-    final practiceProgress = dailyPracticeMinutes > 0 ? (practiceMinutesToday / dailyPracticeMinutes).clamp(0.0, 1.0) : 0.0;
-    final quizProgress = dailyQuizGoal > 0 ? (quizzesCompletedToday / dailyQuizGoal).clamp(0.0, 1.0) : 0.0;
+    final signProgress = dailySignGoal > 0
+        ? (signsLearnedToday / dailySignGoal).clamp(0.0, 1.0)
+        : 0.0;
+    final practiceProgress = dailyPracticeMinutes > 0
+        ? (practiceMinutesToday / dailyPracticeMinutes).clamp(0.0, 1.0)
+        : 0.0;
+    final quizProgress = dailyQuizGoal > 0
+        ? (quizzesCompletedToday / dailyQuizGoal).clamp(0.0, 1.0)
+        : 0.0;
 
     final totalProgress = (signProgress + practiceProgress + quizProgress) / 3;
     return totalProgress.clamp(0.0, 1.0);
@@ -1045,7 +1224,9 @@ class _DashboardPageState extends State<DashboardPage>
     if (user == null) return;
 
     final today = DateTime.now().toIso8601String().split('T')[0];
-    final docRef = FirebaseFirestore.instance.collection('daily_progress').doc('${user!.uid}_$today');
+    final docRef = FirebaseFirestore.instance
+        .collection('daily_progress')
+        .doc('${user!.uid}_$today');
 
     try {
       final doc = await docRef.get();
@@ -1073,7 +1254,9 @@ class _DashboardPageState extends State<DashboardPage>
     if (user == null) return;
 
     final today = DateTime.now().toIso8601String().split('T')[0];
-    final docRef = FirebaseFirestore.instance.collection('daily_progress').doc('${user!.uid}_$today');
+    final docRef = FirebaseFirestore.instance
+        .collection('daily_progress')
+        .doc('${user!.uid}_$today');
 
     try {
       final doc = await docRef.get();
@@ -1110,7 +1293,11 @@ class _DashboardPageState extends State<DashboardPage>
     _logGoalSettingActivity();
   }
 
-  Future<void> _logQuizActivity(String quizTitle, int score, int percentage) async {
+  Future<void> _logQuizActivity(
+    String quizTitle,
+    int score,
+    int percentage,
+  ) async {
     if (user == null) return;
 
     try {
@@ -1172,11 +1359,5 @@ class _DashboardPageState extends State<DashboardPage>
     } catch (e) {
       print('Error logging goal setting activity: $e');
     }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 }
