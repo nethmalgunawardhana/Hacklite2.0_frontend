@@ -200,7 +200,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final isSignLanguageQuery = await _isSignLanguageQuery(userMessage);
 
     if (isSignLanguageQuery && _knowledgeBank != null) {
-      return await _generateSignLanguageResponse(userMessage);
+      final response = await _generateSignLanguageResponse(userMessage);
+      return _cleanResponseText(response);
     } else {
       // Only respond to ASL/sign language queries
       return "I'm here to help with American Sign Language (ASL) questions! Try asking me about signs like 'How do you sign hello?' or 'What's the sign for thank you?'";
@@ -361,6 +362,24 @@ Response should be comprehensive but not overwhelming.
       print('Error generating sign language response: $e');
       return 'Sorry, I encountered an error while processing your sign language query.';
     }
+  }
+
+  String _cleanResponseText(String text) {
+    // Remove markdown formatting
+    text = text.replaceAll('*', ''); // Remove asterisks used for emphasis
+    text = text.replaceAll('**', ''); // Remove bold markdown
+    text = text.replaceAll('*', ''); // Remove italic markdown
+    text = text.replaceAll('`', ''); // Remove inline code formatting
+    text = text.replaceAll('```', ''); // Remove code block formatting
+
+    // Clean up extra whitespace
+    text = text.trim();
+    text = text.replaceAll(
+      RegExp(r'\n{3,}'),
+      '\n\n',
+    ); // Replace multiple newlines with double
+
+    return text;
   }
 
   void _scrollToBottom() {
