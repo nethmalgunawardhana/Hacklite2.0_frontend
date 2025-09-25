@@ -52,12 +52,11 @@ dependencies:
   intl: ^0.20.2
   flutter_svg: ^2.0.9
 
-
   # Storage for landmarks
   path_provider: ^2.1.2
 
   # Speech to text
-  speech_to_text: ^6.6.1
+  # speech_to_text: ^6.6.1  # Temporarily disabled due to compatibility issues
 
   # Gemini AI
   google_generative_ai: ^0.4.3
@@ -65,9 +64,13 @@ dependencies:
   # Environment variables
   flutter_dotenv: ^5.1.0
 
+  # HTTP client for API calls
+  http: ^1.1.0
+  dio: ^5.4.0
+
   # Video player
   video_player: ^2.8.2
-  youtube_player_flutter: ^8.1.2
+  # youtube_player_flutter: ^8.1.2  # Temporarily disabled due to compatibility issues
 
 dev_dependencies:
   flutter_test:
@@ -89,7 +92,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -100,6 +102,7 @@ flutter:
     - assets/images/logo.svg
     - images/
     - lib/models/sign_language_knowledge_bank.json
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

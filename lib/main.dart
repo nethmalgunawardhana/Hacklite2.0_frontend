@@ -5,7 +5,7 @@ import 'firebase_options.dart';
 import 'auth_pages.dart';
 import 'dashboard_page.dart';
 import 'profile_page.dart';
-import 'camera_page.dart';
+import 'camera_page_v2.dart';
 import 'leaderboard_page.dart';
 import 'services/environment_config.dart';
 
@@ -91,7 +91,7 @@ class _HomePageState extends State<HomePage> {
         index: _selectedIndex,
         children: [
           DashboardPage(onNavigateToCamera: () => _onItemTapped(1)),
-          CameraPage(),
+          const CameraPageV2(), // Use the new backend-integrated camera page
           LeaderboardPage(),
           ProfilePage(),
         ],
