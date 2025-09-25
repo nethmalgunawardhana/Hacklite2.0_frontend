@@ -11,13 +11,26 @@ class QuizSelectorPage extends StatefulWidget {
 
 class _QuizSelectorPageState extends State<QuizSelectorPage> {
   List<Map<String, dynamic>> availableQuizzes = [];
+  List<Map<String, dynamic>> filteredQuizzes = [];
   bool isLoading = true;
   String? errorMessage;
+
+  final TextEditingController _searchController = TextEditingController();
+  String selectedType = 'all'; // 'all', 'asl', 'general'
+  String selectedDifficulty = 'all'; // 'all', 'easy', 'medium', 'hard'
 
   @override
   void initState() {
     super.initState();
     _fetchAvailableQuizzes();
+    _searchController.addListener(_applyFilters);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_applyFilters);
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchAvailableQuizzes() async {
@@ -36,25 +49,40 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
         final data = doc.data();
         return {
           'id': doc.id,
-          'title': data['title'] as String,
-          'description': data['description'] as String,
-          'totalQuestions': data['totalQuestions'] as int,
-          'quizType': data['quizType'] as String? ?? 'general',
-          'difficulty': data['difficulty'] as String,
-          'estimatedTime': data['estimatedTime'] as int,
+          'title': (data['title'] ?? '') as String,
+          'description': (data['description'] ?? '') as String,
+          'totalQuestions': (data['totalQuestions'] ?? 0) as int,
+          'quizType': (data['quizType'] ?? 'general') as String,
+          'difficulty': (data['difficulty'] ?? 'unknown') as String,
+          'estimatedTime': (data['estimatedTime'] ?? 0) as int,
         };
       }).toList();
 
       setState(() {
         availableQuizzes = quizzes;
+        filteredQuizzes = List.from(quizzes);
         isLoading = false;
       });
+      _applyFilters();
     } catch (e) {
       setState(() {
         errorMessage = 'Failed to load quizzes: ${e.toString()}';
         isLoading = false;
       });
     }
+  }
+
+  void _applyFilters() {
+    final query = _searchController.text.toLowerCase().trim();
+    setState(() {
+      filteredQuizzes = availableQuizzes.where((q) {
+        final matchesSearch = q['title'].toString().toLowerCase().contains(query) ||
+            q['description'].toString().toLowerCase().contains(query);
+        final matchesType = selectedType == 'all' || q['quizType'] == selectedType;
+        final matchesDifficulty = selectedDifficulty == 'all' || q['difficulty'] == selectedDifficulty;
+        return matchesSearch && matchesType && matchesDifficulty;
+      }).toList();
+    });
   }
 
   void _startQuiz(String quizId, String quizTitle) {
@@ -66,10 +94,116 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
     );
   }
 
+  Widget _buildTopBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Choose a Quiz',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              CircleAvatar(
+                backgroundColor: Colors.white24,
+                child: const Icon(Icons.school, color: Colors.white),
+              )
+            ],
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _searchController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Search quizzes...',
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
+              prefixIcon: const Icon(Icons.search, color: Colors.white70),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip('All', 'all', selectedType == 'all', onSelectedType: true),
+                const SizedBox(width: 8),
+                _buildFilterChip('ASL', 'asl', selectedType == 'asl', onSelectedType: true),
+                const SizedBox(width: 8),
+                _buildFilterChip('General', 'general', selectedType == 'general', onSelectedType: true),
+                const SizedBox(width: 12),
+                _buildFilterChip('Any difficulty', 'all', selectedDifficulty == 'all', onSelectedType: false),
+                const SizedBox(width: 8),
+                _buildFilterChip('Easy', 'easy', selectedDifficulty == 'easy', onSelectedType: false),
+                const SizedBox(width: 8),
+                _buildFilterChip('Medium', 'medium', selectedDifficulty == 'medium', onSelectedType: false),
+                const SizedBox(width: 8),
+                _buildFilterChip('Hard', 'hard', selectedDifficulty == 'hard', onSelectedType: false),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String value, bool selected, {required bool onSelectedType}) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) {
+        setState(() {
+          if (onSelectedType) {
+            selectedType = value;
+          } else {
+            selectedDifficulty = value;
+          }
+        });
+        _applyFilters();
+      },
+      selectedColor: Colors.white,
+      backgroundColor: Colors.white24,
+      labelStyle: TextStyle(color: selected ? Colors.blueGrey[900] : Colors.white),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Loading full-screen with gradient
     if (isLoading) {
       return Scaffold(
+        backgroundColor: Colors.white,
         body: Stack(
           children: [
             Container(
@@ -80,29 +214,31 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                   end: Alignment.bottomCenter,
                 ),
               ),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF4facfe),
+                  children: const [
+                    SizedBox(
+                      width: 64,
+                      height: 64,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 6,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 18),
                     Text(
                       'Loading available quizzes...',
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xFF4facfe),
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            // Back Button
             Positioned(
               top: 40,
               left: 20,
@@ -112,7 +248,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withOpacity(0.18),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -191,126 +327,220 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Quiz'),
-        backgroundColor: const Color(0xFF4facfe),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Color(0xFFF8F9FA)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: ListView.builder(
-          padding: const EdgeInsets.all(20),
-          itemCount: availableQuizzes.length,
-          itemBuilder: (context, index) {
-            final quiz = availableQuizzes[index];
-            return Card(
-              elevation: 8,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: InkWell(
-                onTap: () => _startQuiz(quiz['id'], quiz['title']),
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+      backgroundColor: const Color(0xFFF6F9FB),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildTopBanner(context),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _fetchAvailableQuizzes,
+                color: const Color(0xFF4facfe),
+                child: filteredQuizzes.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+                          const SizedBox(height: 60),
+                          Center(
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 140,
+                                  height: 140,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFe3f2fd), Color(0xFFd0f0ff)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.search_off, size: 64, color: Color(0xFF4facfe)),
+                                ),
+                                const SizedBox(height: 18),
+                                const Text(
+                                  'No quizzes found',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2D3748)),
+                                ),
+                                const SizedBox(height: 8),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 36),
+                                  child: Text(
+                                    'Try a different search term or reset filters to view available quizzes.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _searchController.clear();
+                                      selectedType = 'all';
+                                      selectedDifficulty = 'all';
+                                    });
+                                    _applyFilters();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF4facfe),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                  child: const Text('Reset Filters'),
+                                ),
+                              ],
                             ),
-                            decoration: BoxDecoration(
-                              color: quiz['quizType'] == 'asl'
-                                  ? Colors.blue[100]
-                                  : Colors.green[100],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              quiz['quizType'] == 'asl' ? 'ASL' : 'General',
-                              style: TextStyle(
-                                color: quiz['quizType'] == 'asl'
-                                    ? Colors.blue[800]
-                                    : Colors.green[800],
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
+                          ),
+                        ],
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                        itemCount: filteredQuizzes.length,
+                        itemBuilder: (context, index) {
+                          final quiz = filteredQuizzes[index];
+                          final isASL = quiz['quizType'] == 'asl';
+                          final accent = isASL ? const Color(0xFF4FACFE) : const Color(0xFF48C78E);
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: Material(
+                              color: Colors.white,
+                              elevation: 6,
+                              shadowColor: Colors.black.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(16),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () => _startQuiz(quiz['id'], quiz['title']),
+                                child: Row(
+                                  children: [
+                                    // accent stripe
+                                    Container(
+                                      width: 8,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        color: accent,
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(16),
+                                          bottomLeft: Radius.circular(16),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(14),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(8),
+                                                  decoration: BoxDecoration(
+                                                    color: accent.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Icon(
+                                                    isASL ? Icons.pan_tool : Icons.quiz,
+                                                    color: accent,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    quiz['title'],
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: Color(0xFF2D3748),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black.withOpacity(0.06),
+                                                    borderRadius: BorderRadius.circular(20),
+                                                  ),
+                                                  child: Text(
+                                                    '${quiz['totalQuestions']} Q',
+                                                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              quiz['description'],
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black.withOpacity(0.04),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                                                      const SizedBox(width: 6),
+                                                      Text('${quiz['estimatedTime']} min', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black.withOpacity(0.04),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Text(
+                                                    quiz['difficulty'].toString().toUpperCase(),
+                                                    style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
+                                                  ),
+                                                ),
+                                                const Spacer(),
+                                                ElevatedButton(
+                                                  onPressed: () => _startQuiz(quiz['id'], quiz['title']),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: accent,
+                                                    elevation: 0,
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  ),
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                                    child: Text('Start', style: TextStyle(fontWeight: FontWeight.w700)),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${quiz['totalQuestions']} questions',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        quiz['title'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2D3748),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        quiz['description'],
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${quiz['estimatedTime']} min',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Icon(
-                            Icons.bar_chart,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            quiz['difficulty'],
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
