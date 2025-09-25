@@ -287,65 +287,18 @@ class BackendPredictionService {
   /// Convert CameraImage to JPEG and resize to target size
   Future<Uint8List?> _convertAndResizeImage(CameraImage cameraImage) async {
     try {
-      // Convert CameraImage to Image format
       img.Image? image;
 
       if (cameraImage.format.group == ImageFormatGroup.yuv420) {
-        // YUV420 format
-        final yBuffer = cameraImage.planes[0].bytes;
-        final uBuffer = cameraImage.planes[1].bytes;
-        final vBuffer = cameraImage.planes[2].bytes;
-
-        image = img.Image(width: cameraImage.width, height: cameraImage.height);
-
-        // Simple YUV to RGB conversion (this is a simplified approach)
-        // For production, you might want a more accurate conversion
-        for (int y = 0; y < cameraImage.height; y++) {
-          for (int x = 0; x < cameraImage.width; x++) {
-            final yIndex = y * cameraImage.width + x;
-            final uvIndex = (y ~/ 2) * (cameraImage.width ~/ 2) + (x ~/ 2);
-
-            if (yIndex < yBuffer.length &&
-                uvIndex < uBuffer.length &&
-                uvIndex < vBuffer.length) {
-              final yValue = yBuffer[yIndex];
-              final uValue = uBuffer[uvIndex];
-              final vValue = vBuffer[uvIndex];
-
-              // YUV to RGB conversion
-              final r = (yValue + 1.402 * (vValue - 128)).clamp(0, 255).toInt();
-              final g =
-                  (yValue -
-                          0.344136 * (uValue - 128) -
-                          0.714136 * (vValue - 128))
-                      .clamp(0, 255)
-                      .toInt();
-              final b = (yValue + 1.772 * (uValue - 128)).clamp(0, 255).toInt();
-
-              image.setPixelRgb(x, y, r, g, b);
-            }
-          }
-        }
+        image = await _convertYuv420Simple(cameraImage);
+      } else if (cameraImage.format.group == ImageFormatGroup.bgra8888) {
+        image = await _convertBgraToRgb(cameraImage);
       } else {
-        // For other formats, use a simpler approach
-        image = img.Image(width: cameraImage.width, height: cameraImage.height);
+        image = await _convertUnknownFormat(cameraImage);
+      }
 
-        // Copy bytes directly (this is a fallback)
-        final bytes = cameraImage.planes[0].bytes;
-        for (int i = 0; i < bytes.length && i < image.length * 4; i += 4) {
-          if (i + 3 < bytes.length) {
-            final pixelIndex = i ~/ 4;
-            if (pixelIndex < image.length) {
-              final pixel = image.getPixel(
-                pixelIndex % image.width,
-                pixelIndex ~/ image.width,
-              );
-              pixel.r = bytes[i];
-              pixel.g = bytes[i + 1];
-              pixel.b = bytes[i + 2];
-            }
-          }
-        }
+      if (image == null) {
+        throw Exception('Failed to convert camera image format');
       }
 
       // Resize to target size
@@ -358,9 +311,103 @@ class BackendPredictionService {
 
       // Convert to JPEG
       final jpegBytes = img.encodeJpg(resized, quality: 85);
+
       return Uint8List.fromList(jpegBytes);
     } catch (e) {
       print('❌ Error converting image: $e');
+      return null;
+    }
+  }
+
+  /// Simple YUV420 to RGB conversion focusing on the Y (luminance) channel
+  Future<img.Image?> _convertYuv420Simple(CameraImage cameraImage) async {
+    try {
+      final int width = cameraImage.width;
+      final int height = cameraImage.height;
+
+      final yPlane = cameraImage.planes[0];
+      final yBytes = yPlane.bytes;
+      final yRowStride = yPlane.bytesPerRow;
+
+      final image = img.Image(width: width, height: height);
+
+      // For now, use only the Y (luminance) channel and ignore UV for simplicity
+      // This creates a grayscale image which works well for ASL detection
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final yIndex = y * yRowStride + x;
+
+          if (yIndex < yBytes.length) {
+            final luminance = yBytes[yIndex];
+            // Use luminance for all RGB channels to create grayscale
+            image.setPixelRgb(x, y, luminance, luminance, luminance);
+          }
+        }
+      }
+
+      return image;
+    } catch (e) {
+      print('❌ Error converting YUV420: $e');
+      return null;
+    }
+  }
+
+  /// Convert BGRA format to RGB
+  Future<img.Image?> _convertBgraToRgb(CameraImage cameraImage) async {
+    try {
+      final int width = cameraImage.width;
+      final int height = cameraImage.height;
+      final bytes = cameraImage.planes[0].bytes;
+      final bytesPerRow = cameraImage.planes[0].bytesPerRow;
+
+      final image = img.Image(width: width, height: height);
+
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final pixelIndex = y * bytesPerRow + x * 4;
+
+          if (pixelIndex + 3 < bytes.length) {
+            final b = bytes[pixelIndex];
+            final g = bytes[pixelIndex + 1];
+            final r = bytes[pixelIndex + 2];
+            // Alpha at pixelIndex + 3 (ignored)
+
+            image.setPixelRgb(x, y, r, g, b);
+          }
+        }
+      }
+
+      return image;
+    } catch (e) {
+      print('❌ Error converting BGRA: $e');
+      return null;
+    }
+  }
+
+  /// Convert unknown format (fallback to grayscale)
+  Future<img.Image?> _convertUnknownFormat(CameraImage cameraImage) async {
+    try {
+      final int width = cameraImage.width;
+      final int height = cameraImage.height;
+      final bytes = cameraImage.planes[0].bytes;
+
+      final image = img.Image(width: width, height: height);
+
+      // Treat as grayscale data
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final pixelIndex = y * width + x;
+
+          if (pixelIndex < bytes.length) {
+            final gray = bytes[pixelIndex];
+            image.setPixelRgb(x, y, gray, gray, gray);
+          }
+        }
+      }
+
+      return image;
+    } catch (e) {
+      print('❌ Error converting unknown format: $e');
       return null;
     }
   }
