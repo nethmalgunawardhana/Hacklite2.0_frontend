@@ -18,7 +18,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -60,6 +60,11 @@ class _DashboardPageState extends State<DashboardPage>
     _animation = Tween<double>(begin: 0.0, end: 10.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
 
     _fetchUserStats();
     _fetchUserGoals();
