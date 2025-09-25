@@ -76,10 +76,14 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
     final query = _searchController.text.toLowerCase().trim();
     setState(() {
       filteredQuizzes = availableQuizzes.where((q) {
-        final matchesSearch = q['title'].toString().toLowerCase().contains(query) ||
+        final matchesSearch =
+            q['title'].toString().toLowerCase().contains(query) ||
             q['description'].toString().toLowerCase().contains(query);
-        final matchesType = selectedType == 'all' || q['quizType'] == selectedType;
-        final matchesDifficulty = selectedDifficulty == 'all' || q['difficulty'] == selectedDifficulty;
+        final matchesType =
+            selectedType == 'all' || q['quizType'] == selectedType;
+        final matchesDifficulty =
+            selectedDifficulty == 'all' ||
+            q['difficulty'] == selectedDifficulty;
         return matchesSearch && matchesType && matchesDifficulty;
       }).toList();
     });
@@ -127,7 +131,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
               CircleAvatar(
                 backgroundColor: Colors.white24,
                 child: const Icon(Icons.school, color: Colors.white),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -156,28 +160,68 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildFilterChip('All', 'all', selectedType == 'all', onSelectedType: true),
+                _buildFilterChip(
+                  'All',
+                  'all',
+                  selectedType == 'all',
+                  onSelectedType: true,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('ASL', 'asl', selectedType == 'asl', onSelectedType: true),
+                _buildFilterChip(
+                  'ASL',
+                  'asl',
+                  selectedType == 'asl',
+                  onSelectedType: true,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('General', 'general', selectedType == 'general', onSelectedType: true),
+                _buildFilterChip(
+                  'General',
+                  'general',
+                  selectedType == 'general',
+                  onSelectedType: true,
+                ),
                 const SizedBox(width: 12),
-                _buildFilterChip('Any difficulty', 'all', selectedDifficulty == 'all', onSelectedType: false),
+                _buildFilterChip(
+                  'Any difficulty',
+                  'all',
+                  selectedDifficulty == 'all',
+                  onSelectedType: false,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('Easy', 'easy', selectedDifficulty == 'easy', onSelectedType: false),
+                _buildFilterChip(
+                  'Easy',
+                  'easy',
+                  selectedDifficulty == 'easy',
+                  onSelectedType: false,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('Medium', 'medium', selectedDifficulty == 'medium', onSelectedType: false),
+                _buildFilterChip(
+                  'Medium',
+                  'medium',
+                  selectedDifficulty == 'medium',
+                  onSelectedType: false,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('Hard', 'hard', selectedDifficulty == 'hard', onSelectedType: false),
+                _buildFilterChip(
+                  'Hard',
+                  'hard',
+                  selectedDifficulty == 'hard',
+                  onSelectedType: false,
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, String value, bool selected, {required bool onSelectedType}) {
+  Widget _buildFilterChip(
+    String label,
+    String value,
+    bool selected, {
+    required bool onSelectedType,
+  }) {
     return ChoiceChip(
       label: Text(label),
       selected: selected,
@@ -193,7 +237,9 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
       },
       selectedColor: Colors.white,
       backgroundColor: Colors.white24,
-      labelStyle: TextStyle(color: selected ? Colors.blueGrey[900] : Colors.white),
+      labelStyle: TextStyle(
+        color: selected ? Colors.blueGrey[900] : Colors.white,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     );
   }
@@ -223,7 +269,9 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                       height: 64,
                       child: CircularProgressIndicator(
                         strokeWidth: 6,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF1976D2),
+                        ),
                       ),
                     ),
                     SizedBox(height: 18),
@@ -349,7 +397,10 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                   height: 140,
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFFe3f2fd), Color(0xFFd0f0ff)],
+                                      colors: [
+                                        Color(0xFFe3f2fd),
+                                        Color(0xFFd0f0ff),
+                                      ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
@@ -362,12 +413,20 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.search_off, size: 64, color: Color(0xFF1976D2)),
+                                  child: const Icon(
+                                    Icons.search_off,
+                                    size: 64,
+                                    color: Color(0xFF1976D2),
+                                  ),
                                 ),
                                 const SizedBox(height: 18),
                                 const Text(
                                   'No quizzes found',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2D3748)),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF2D3748),
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 const Padding(
@@ -390,7 +449,9 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF1976D2),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
                                   ),
                                   child: const Text('Reset Filters'),
                                 ),
@@ -405,7 +466,9 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                         itemBuilder: (context, index) {
                           final quiz = filteredQuizzes[index];
                           final isASL = quiz['quizType'] == 'asl';
-                          final accent = isASL ? const Color(0xFF1976D2) : const Color(0xFF48C78E);
+                          final accent = isASL
+                              ? const Color(0xFF1976D2)
+                              : const Color(0xFF48C78E);
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 14),
@@ -416,7 +479,8 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                               borderRadius: BorderRadius.circular(16),
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(16),
-                                onTap: () => _startQuiz(quiz['id'], quiz['title']),
+                                onTap: () =>
+                                    _startQuiz(quiz['id'], quiz['title']),
                                 child: Row(
                                   children: [
                                     // accent stripe
@@ -435,18 +499,28 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                       child: Padding(
                                         padding: const EdgeInsets.all(14),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Row(
                                               children: [
                                                 Container(
-                                                  padding: const EdgeInsets.all(8),
+                                                  padding: const EdgeInsets.all(
+                                                    8,
+                                                  ),
                                                   decoration: BoxDecoration(
-                                                    color: accent.withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(10),
+                                                    color: accent.withOpacity(
+                                                      0.1,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
                                                   ),
                                                   child: Icon(
-                                                    isASL ? Icons.pan_tool : Icons.quiz,
+                                                    isASL
+                                                        ? Icons.pan_tool
+                                                        : Icons.quiz,
                                                     color: accent,
                                                     size: 20,
                                                   ),
@@ -457,21 +531,33 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                                     quiz['title'],
                                                     style: const TextStyle(
                                                       fontSize: 16,
-                                                      fontWeight: FontWeight.w700,
+                                                      fontWeight:
+                                                          FontWeight.w700,
                                                       color: Color(0xFF2D3748),
                                                     ),
                                                   ),
                                                 ),
                                                 const SizedBox(width: 8),
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 6,
+                                                      ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.black.withOpacity(0.06),
-                                                    borderRadius: BorderRadius.circular(20),
+                                                    color: Colors.black
+                                                        .withOpacity(0.06),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          20,
+                                                        ),
                                                   ),
                                                   child: Text(
                                                     '${quiz['totalQuestions']} Q',
-                                                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black54,
+                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -481,48 +567,102 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                               quiz['description'],
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                              style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 13,
+                                              ),
                                             ),
                                             const SizedBox(height: 12),
                                             Row(
                                               children: [
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 6,
+                                                      ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.black.withOpacity(0.04),
-                                                    borderRadius: BorderRadius.circular(12),
+                                                    color: Colors.black
+                                                        .withOpacity(0.04),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                   ),
                                                   child: Row(
                                                     children: [
-                                                      const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                                                      const Icon(
+                                                        Icons.access_time,
+                                                        size: 14,
+                                                        color: Colors.grey,
+                                                      ),
                                                       const SizedBox(width: 6),
-                                                      Text('${quiz['estimatedTime']} min', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                                      Text(
+                                                        '${quiz['estimatedTime']} min',
+                                                        style: const TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
                                                     ],
                                                   ),
                                                 ),
                                                 const SizedBox(width: 8),
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 6,
+                                                      ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.black.withOpacity(0.04),
-                                                    borderRadius: BorderRadius.circular(12),
+                                                    color: Colors.black
+                                                        .withOpacity(0.04),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                   ),
                                                   child: Text(
-                                                    quiz['difficulty'].toString().toUpperCase(),
-                                                    style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
+                                                    quiz['difficulty']
+                                                        .toString()
+                                                        .toUpperCase(),
+                                                    style: const TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
                                                   ),
                                                 ),
                                                 const Spacer(),
                                                 ElevatedButton(
-                                                  onPressed: () => _startQuiz(quiz['id'], quiz['title']),
+                                                  onPressed: () => _startQuiz(
+                                                    quiz['id'],
+                                                    quiz['title'],
+                                                  ),
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor: accent,
                                                     elevation: 0,
-                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
                                                   ),
                                                   child: const Padding(
-                                                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                                    child: Text('Start', style: TextStyle(fontWeight: FontWeight.w700)),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 8,
+                                                        ),
+                                                    child: Text(
+                                                      'Start',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
                                               ],

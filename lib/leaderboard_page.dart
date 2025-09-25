@@ -102,7 +102,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     final toggleSelection = [
       selectedTimeframe == 'all',
       selectedTimeframe == 'month',
-      selectedTimeframe == 'week'
+      selectedTimeframe == 'week',
     ];
 
     return Scaffold(
@@ -134,7 +134,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   // Back button
                   Material(
                     color: Colors.white.withOpacity(0.12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.of(context).pop(),
@@ -176,7 +178,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     child: ToggleButtons(
                       isSelected: toggleSelection,
                       onPressed: (i) {
-                        final val = i == 0 ? 'all' : (i == 1 ? 'month' : 'week');
+                        final val = i == 0
+                            ? 'all'
+                            : (i == 1 ? 'month' : 'week');
                         _changeTimeframe(val);
                       },
                       borderRadius: BorderRadius.circular(8),
@@ -184,7 +188,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       color: Colors.white,
                       fillColor: Colors.white,
                       renderBorder: false,
-                      constraints: const BoxConstraints(minWidth: 64, minHeight: 36),
+                      constraints: const BoxConstraints(
+                        minWidth: 64,
+                        minHeight: 36,
+                      ),
                       children: const [
                         Text('All'),
                         Text('Month'),
@@ -197,9 +204,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             ),
 
             // Content
-            Expanded(
-              child: _buildBodyContent(),
-            ),
+            Expanded(child: _buildBodyContent()),
           ],
         ),
       ),
@@ -255,8 +260,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1976D2),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -285,7 +295,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             const SizedBox(height: 16),
             const Text(
               'No quiz scores yet.\nBe the first champion!',
-              style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 18),
@@ -296,8 +310,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1976D2),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ],
@@ -313,11 +332,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         itemCount: leaderboardData.length,
         itemBuilder: (context, index) {
           final entry = leaderboardData[index];
-          final isCurrentUser = entry['userId'] == FirebaseAuth.instance.currentUser?.uid;
+          final isCurrentUser =
+              entry['userId'] == FirebaseAuth.instance.currentUser?.uid;
 
           final primaryColor = _getRankColor(index);
           final titleColor = isCurrentUser ? Colors.white : Colors.black87;
-          final subtitleColor = isCurrentUser ? Colors.white70 : Colors.grey[700];
+          final subtitleColor = isCurrentUser
+              ? Colors.white70
+              : Colors.grey[700];
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -338,20 +360,26 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                             end: Alignment.centerRight,
                           )
                         : index < 3
-                            ? LinearGradient(
-                                colors: [
-                                  Colors.white,
-                                  Colors.white.withOpacity(0.98),
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              )
-                            : null,
+                        ? LinearGradient(
+                            colors: [
+                              Colors.white,
+                              Colors.white.withOpacity(0.98),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          )
+                        : null,
                     border: isCurrentUser
-                        ? Border.all(color: Colors.white.withOpacity(0.16), width: 1)
+                        ? Border.all(
+                            color: Colors.white.withOpacity(0.16),
+                            width: 1,
+                          )
                         : Border.all(color: Colors.grey.withOpacity(0.06)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       // Rank avatar
@@ -361,7 +389,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
-                            colors: [primaryColor.withOpacity(0.95), primaryColor.withOpacity(0.7)],
+                            colors: [
+                              primaryColor.withOpacity(0.95),
+                              primaryColor.withOpacity(0.7),
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -370,15 +401,23 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                               color: primaryColor.withOpacity(0.22),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
-                            )
+                            ),
                           ],
                         ),
                         child: Center(
                           child: index < 3
-                              ? Icon(_getRankIcon(index), color: Colors.white, size: 20)
+                              ? Icon(
+                                  _getRankIcon(index),
+                                  color: Colors.white,
+                                  size: 20,
+                                )
                               : Text(
                                   '${index + 1}',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                         ),
                       ),
@@ -393,20 +432,31 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                 Expanded(
                                   child: Text(
                                     entry['userName'] as String,
-                                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: titleColor),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: titleColor,
+                                    ),
                                   ),
                                 ),
                                 if (isCurrentUser)
                                   Container(
                                     margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.16),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Text(
                                       'YOU',
-                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                               ],
@@ -414,19 +464,33 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                Icon(Icons.quiz, size: 14, color: subtitleColor),
+                                Icon(
+                                  Icons.quiz,
+                                  size: 14,
+                                  color: subtitleColor,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   '${entry['score']}/${entry['totalQuestions']} correct',
-                                  style: TextStyle(color: subtitleColor, fontSize: 13),
+                                  style: TextStyle(
+                                    color: subtitleColor,
+                                    fontSize: 13,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
-                                Icon(Icons.book, size: 14, color: subtitleColor),
+                                Icon(
+                                  Icons.book,
+                                  size: 14,
+                                  color: subtitleColor,
+                                ),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
                                     entry['quizTitle'] as String,
-                                    style: TextStyle(color: subtitleColor, fontSize: 13),
+                                    style: TextStyle(
+                                      color: subtitleColor,
+                                      fontSize: 13,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -438,21 +502,42 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       ),
                       // Percentage badge
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: isCurrentUser ? Colors.white.withOpacity(0.16) : primaryColor.withOpacity(0.08),
+                          color: isCurrentUser
+                              ? Colors.white.withOpacity(0.16)
+                              : primaryColor.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: primaryColor.withOpacity(0.14)),
+                          border: Border.all(
+                            color: primaryColor.withOpacity(0.14),
+                          ),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               '${entry['percentage']}%',
-                              style: TextStyle(color: isCurrentUser ? Colors.white : primaryColor, fontWeight: FontWeight.w800, fontSize: 14),
+                              style: TextStyle(
+                                color: isCurrentUser
+                                    ? Colors.white
+                                    : primaryColor,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
                             ),
                             const SizedBox(height: 2),
-                            Text('score', style: TextStyle(color: isCurrentUser ? Colors.white70 : primaryColor.withOpacity(0.9), fontSize: 10)),
+                            Text(
+                              'score',
+                              style: TextStyle(
+                                color: isCurrentUser
+                                    ? Colors.white70
+                                    : primaryColor.withOpacity(0.9),
+                                fontSize: 10,
+                              ),
+                            ),
                           ],
                         ),
                       ),

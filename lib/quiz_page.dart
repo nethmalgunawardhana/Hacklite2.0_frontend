@@ -98,8 +98,8 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _selectAnswer(int idx) {
-    if (answersChecked.isNotEmpty &&
-        answersChecked[currentQuestionIndex]) return;
+    if (answersChecked.isNotEmpty && answersChecked[currentQuestionIndex])
+      return;
     setState(() {
       selectedAnswers[currentQuestionIndex] = idx;
     });
@@ -218,21 +218,30 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF1976D2)),
+        appBar: AppBar(
+          title: const Text('Practice Quiz'),
+          backgroundColor: const Color(0xFF1976D2),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF1976D2)),
+        appBar: AppBar(
+          title: const Text('Practice Quiz'),
+          backgroundColor: const Color(0xFF1976D2),
+        ),
         body: Center(child: Text(errorMessage!)),
       );
     }
 
     if (questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF1976D2)),
+        appBar: AppBar(
+          title: const Text('Practice Quiz'),
+          backgroundColor: const Color(0xFF1976D2),
+        ),
         body: const Center(child: Text('No questions available')),
       );
     }
@@ -241,25 +250,43 @@ class _QuizPageState extends State<QuizPage> {
       final total = questions.length;
       final percent = total > 0 ? ((score / total) * 100).round() : 0;
       return Scaffold(
-        appBar: AppBar(title: const Text('Results'), backgroundColor: const Color(0xFF1976D2)),
+        appBar: AppBar(
+          title: const Text('Results'),
+          backgroundColor: const Color(0xFF1976D2),
+        ),
         body: Center(
           child: Card(
             margin: const EdgeInsets.all(24),
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('Quiz Complete', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 12),
-                Text('Score: $score / $total'),
-                const SizedBox(height: 8),
-                Text('$percent%'),
-                const SizedBox(height: 16),
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  ElevatedButton(onPressed: _resetQuiz, child: const Text('Retake')),
-                  const SizedBox(width: 12),
-                  OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Done')),
-                ])
-              ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Quiz Complete',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Score: $score / $total'),
+                  const SizedBox(height: 8),
+                  Text('$percent%'),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _resetQuiz,
+                        child: const Text('Retake'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -273,92 +300,167 @@ class _QuizPageState extends State<QuizPage> {
       appBar: AppBar(
         title: Text(widget.quizTitle ?? 'Practice Quiz'),
         backgroundColor: const Color(0xFF1976D2),
-        actions: [Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('Score: $score')))],
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Center(child: Text('Score: $score')),
+          ),
+        ],
       ),
       backgroundColor: const Color(0xFFF4F7FB),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Question ${currentQuestionIndex + 1} of ${questions.length}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Text(current['question'] as String, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                ]),
-              ),
-            ),
-            const SizedBox(height: 18),
-            ...List.generate(options.length, (i) {
-              final bg = _optionBg(i);
-              final border = _optionBorder(i);
-              final selected = selectedAnswers[currentQuestionIndex] == i;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: answersChecked[currentQuestionIndex] ? null : () => _selectAnswer(i),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: bg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: border),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                    child: Row(children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: selected ? const Color(0xFF4facfe) : Colors.white,
-                        child: Text(String.fromCharCode(65 + i), style: TextStyle(color: selected ? Colors.white : Colors.black)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(options[i], style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w500))),
-                    ]),
-                  ),
-                ),
-              );
-            }),
-            const SizedBox(height: 16),
-            if (answersChecked[currentQuestionIndex]) ...[
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Card(
-                color: answersCorrect[currentQuestionIndex] ? Colors.green[50] : Colors.red[50],
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    answersCorrect[currentQuestionIndex]
-                        ? 'Correct'
-                        : 'Incorrect — correct: ${options[current['correctAnswer'] as int]}',
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Question ${currentQuestionIndex + 1} of ${questions.length}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        current['question'] as String,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 18),
+              ...List.generate(options.length, (i) {
+                final bg = _optionBg(i);
+                final border = _optionBorder(i);
+                final selected = selectedAnswers[currentQuestionIndex] == i;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: answersChecked[currentQuestionIndex]
+                        ? null
+                        : () => _selectAnswer(i),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: border),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: selected
+                                ? const Color(0xFF4facfe)
+                                : Colors.white,
+                            child: Text(
+                              String.fromCharCode(65 + i),
+                              style: TextStyle(
+                                color: selected ? Colors.white : Colors.black,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              options[i],
+                              style: TextStyle(
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 16),
+              if (answersChecked[currentQuestionIndex]) ...[
+                Card(
+                  color: answersCorrect[currentQuestionIndex]
+                      ? Colors.green[50]
+                      : Colors.red[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      answersCorrect[currentQuestionIndex]
+                          ? 'Correct'
+                          : 'Incorrect — correct: ${options[current['correctAnswer'] as int]}',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: currentQuestionIndex > 0
+                          ? _previousQuestion
+                          : null,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Previous'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child:
+                        selectedAnswers[currentQuestionIndex] != null &&
+                            !answersChecked[currentQuestionIndex]
+                        ? ElevatedButton.icon(
+                            onPressed: _checkAnswer,
+                            icon: const Icon(Icons.visibility),
+                            label: const Text('Check Answer'),
+                          )
+                        : answersChecked[currentQuestionIndex]
+                        ? ElevatedButton.icon(
+                            onPressed: _nextQuestion,
+                            icon: const Icon(Icons.arrow_forward),
+                            label: Text(
+                              currentQuestionIndex < questions.length - 1
+                                  ? 'Next'
+                                  : 'Finish',
+                            ),
+                          )
+                        : ElevatedButton.icon(
+                            onPressed: null,
+                            icon: const Icon(Icons.arrow_forward),
+                            label: const Text('Next'),
+                          ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-            ],
-            Row(children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: currentQuestionIndex > 0 ? _previousQuestion : null,
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Previous'),
+              LinearProgressIndicator(
+                value: (currentQuestionIndex + 1) / questions.length,
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  '${currentQuestionIndex + 1} of ${questions.length}',
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: selectedAnswers[currentQuestionIndex] != null && !answersChecked[currentQuestionIndex]
-                    ? ElevatedButton.icon(onPressed: _checkAnswer, icon: const Icon(Icons.visibility), label: const Text('Check Answer'))
-                    : answersChecked[currentQuestionIndex]
-                        ? ElevatedButton.icon(onPressed: _nextQuestion, icon: const Icon(Icons.arrow_forward), label: Text(currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish'))
-                        : ElevatedButton.icon(onPressed: null, icon: const Icon(Icons.arrow_forward), label: const Text('Next')),
-              ),
-            ]),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(value: (currentQuestionIndex + 1) / questions.length),
-            const SizedBox(height: 8),
-            Center(child: Text('${currentQuestionIndex + 1} of ${questions.length}')),
-          ]),
+            ],
+          ),
         ),
       ),
     );

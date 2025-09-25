@@ -500,7 +500,7 @@ class _SignDictionaryPageState extends State<SignDictionaryPage> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.white, Color(0xFFF8F9FA)],
+                colors: [Color(0xFFF4F7FB), Color(0xFFF4F7FB)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -517,7 +517,7 @@ class _SignDictionaryPageState extends State<SignDictionaryPage> {
                   ),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                      colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -635,19 +635,19 @@ class _SignDictionaryPageState extends State<SignDictionaryPage> {
                                   setState(() => selectedCategory = category);
                                 },
                                 backgroundColor: isSelected
-                                    ? const Color(0xFF4facfe).withOpacity(0.8)
+                                    ? const Color(0xFF1976D2).withOpacity(0.8)
                                     : Colors.white.withOpacity(0.2),
-                                selectedColor: const Color(0xFF4facfe),
+                                selectedColor: const Color(0xFF1976D2),
                                 checkmarkColor: Colors.white,
                                 elevation: isSelected ? 4 : 2,
                                 shadowColor: isSelected
-                                    ? const Color(0xFF4facfe).withOpacity(0.3)
+                                    ? const Color(0xFF1976D2).withOpacity(0.3)
                                     : Colors.black.withOpacity(0.1),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                   side: BorderSide(
                                     color: isSelected
-                                        ? const Color(0xFF4facfe)
+                                        ? const Color(0xFF1976D2)
                                         : Colors.white.withOpacity(0.3),
                                     width: 1,
                                   ),
@@ -700,7 +700,7 @@ class _SignDictionaryPageState extends State<SignDictionaryPage> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
                                   gradient: LinearGradient(
-                                    colors: [Colors.white, Color(0xFFF8F9FA)],
+                                    colors: [Colors.white, Color(0xFFF4F7FB)],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
@@ -717,20 +717,20 @@ class _SignDictionaryPageState extends State<SignDictionaryPage> {
                                             padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
                                               color: const Color(
-                                                0xFF4facfe,
+                                                0xFF1976D2,
                                               ).withOpacity(0.1),
                                               borderRadius:
                                                   BorderRadius.circular(14),
                                               border: Border.all(
                                                 color: const Color(
-                                                  0xFF4facfe,
+                                                  0xFF1976D2,
                                                 ).withOpacity(0.2),
                                                 width: 1,
                                               ),
                                             ),
                                             child: const Icon(
                                               Icons.sign_language,
-                                              color: Color(0xFF4facfe),
+                                              color: Color(0xFF1976D2),
                                               size: 28,
                                             ),
                                           ),
