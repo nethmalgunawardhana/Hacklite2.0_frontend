@@ -27,14 +27,14 @@ class BackendPredictionService {
 
   // Configuration
   static const Duration defaultUploadInterval = Duration(
-    milliseconds: 500,
-  ); // 2 FPS (500ms interval) - optimal for ASL detection
+    milliseconds: 1000,
+  ); // 1 FPS (1000ms interval) - reduced frequency for better performance
   static const Duration minUploadInterval = Duration(
-    milliseconds: 200,
-  ); // 5 FPS max
+    milliseconds: 500,
+  ); // 2 FPS max
   static const Duration maxUploadInterval = Duration(
-    milliseconds: 2000,
-  ); // 0.5 FPS min
+    milliseconds: 3000,
+  ); // 0.33 FPS min
   static const int targetImageSize = 200; // 200x200 as specified
   static const int retryAttempts = 3;
   static const Duration retryDelay = Duration(seconds: 2);
