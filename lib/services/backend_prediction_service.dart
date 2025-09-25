@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/foundation.dart';
 import '../models/asl_prediction.dart';
 import '../models/backend_response.dart';
@@ -103,7 +104,9 @@ class BackendPredictionService {
       _dio = Dio();
       _dio.options.connectTimeout = const Duration(seconds: 10);
       _dio.options.receiveTimeout = const Duration(seconds: 10);
-      _dio.options.headers['Content-Type'] = 'multipart/form-data';
+      // DO NOT set a fixed multipart Content-Type header here; Dio will
+      // add the proper header including the boundary when sending FormData.
+      // Setting it manually (without a boundary) can corrupt multipart uploads.
 
       // Initialize session ID
       _sessionId = await DeviceSessionManager.getSessionId();
@@ -222,7 +225,7 @@ class BackendPredictionService {
         'image': MultipartFile.fromBytes(
           jpegBytes,
           filename: 'frame.jpg',
-          contentType: DioMediaType('image', 'jpeg'),
+          contentType: MediaType('image', 'jpeg'),
         ),
         'session_id': _sessionId,
       });
