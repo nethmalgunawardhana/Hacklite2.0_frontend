@@ -315,7 +315,9 @@ class _CameraPageState extends State<CameraPage> {
 
   @override
   Widget build(BuildContext context) {
+    // UI-only changes: more polished header, glass card, floating controls, and animated translation area.
     return Scaffold(
+
       extendBody: true, // Extend body behind bottom navigation
       extendBodyBehindAppBar: true, // Extend body behind app bar
       body: Stack(
@@ -342,12 +344,14 @@ class _CameraPageState extends State<CameraPage> {
                 right: 20,
                 bottom: 10,
               ),
+
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFEFF7FF), Color(0xFFF7FBFF)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
+
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -460,19 +464,16 @@ class _CameraPageState extends State<CameraPage> {
                               ),
                             ),
                           ],
+
                         ),
+                        child: const Icon(Icons.info_outline, color: Colors.black54, size: 20),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          // Back Button - Removed as requested
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildContent() {
     return LayoutBuilder(
@@ -1064,6 +1065,7 @@ class _CameraPageState extends State<CameraPage> {
           ),
         );
       },
+
     );
   }
 }
