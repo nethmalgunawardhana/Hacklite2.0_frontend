@@ -4,12 +4,14 @@ class ASLPrediction {
   final double confidence;
   final DateTime timestamp;
   final List<HandLandmark> landmarks;
+  final String? assembledText;
 
   ASLPrediction({
     required this.letter,
     required this.confidence,
     required this.timestamp,
     this.landmarks = const [],
+    this.assembledText,
   });
 
   /// Returns true if the prediction confidence is above threshold

@@ -52,9 +52,26 @@ dependencies:
   intl: ^0.20.2
   flutter_svg: ^2.0.9
 
-
   # Storage for landmarks
   path_provider: ^2.1.2
+  shared_preferences: ^2.2.2
+
+  # Speech to text
+  # speech_to_text: ^6.6.1  # Temporarily disabled due to compatibility issues
+
+  # Gemini AI
+  google_generative_ai: ^0.4.3
+
+  # Environment variables
+  flutter_dotenv: ^5.1.0
+
+  # HTTP client for API calls
+  http: ^1.1.0
+  dio: ^5.4.0
+
+  # Video player
+  video_player: ^2.8.2
+  # youtube_player_flutter: ^8.1.2  # Temporarily disabled due to compatibility issues
 
 dev_dependencies:
   flutter_test:
@@ -70,13 +87,13 @@ dev_dependencies:
   # Testing dependencies
   mockito: ^5.4.4
   firebase_auth_mocks: ^0.13.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -86,6 +103,17 @@ flutter:
   assets:
     - assets/images/logo.svg
     - images/
+    - lib/models/sign_language_knowledge_bank.json
+    - .env
+
+# Configuration for flutter_launcher_icons. Run:
+# flutter pub get ; flutter pub run flutter_launcher_icons:main
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/logo.png"
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

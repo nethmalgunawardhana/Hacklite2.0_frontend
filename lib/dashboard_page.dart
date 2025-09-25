@@ -6,6 +6,7 @@ import 'leaderboard_page.dart';
 import 'sign_learning_page.dart';
 import 'goal_setting_page.dart';
 import 'sign_dictionary_page.dart';
+import 'chatbot_screen.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback? onNavigateToCamera;
@@ -16,7 +17,12 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> with SingleTickerProviderStateMixin {
+
+class _DashboardPageState extends State<DashboardPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
   final User? user = FirebaseAuth.instance.currentUser;
 
   // User stats
@@ -47,8 +53,15 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))
-      ..repeat(reverse: true);
+
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.0, end: 10.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
     _fetchUserStats();
     _fetchUserGoals();
     _fetchTodayProgress();
@@ -300,7 +313,49 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+
+      backgroundColor: Colors.grey[100],
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 16, right: 16),
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, -_animation.value),
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChatbotScreen(),
+                    ),
+                  );
+                },
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.blue.shade700, width: 5),
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      'images/chatbot_icon.png',
+                      width: 70,
+                      height: 70,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1117,5 +1172,11 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     } catch (e) {
       print('Error logging goal setting activity: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 }

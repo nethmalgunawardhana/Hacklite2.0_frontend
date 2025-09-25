@@ -49,6 +49,26 @@ WaveWords is a modern Flutter application that helps users learn and practice si
 - Firebase: `firebase_core`, `firebase_auth`, `cloud_firestore`
 - Camera: `camera`, permissions with `permission_handler`
 - UI: `flutter_svg`, `intl`
+- AI: `google_generative_ai` (Gemini 2.5 Flash), `flutter_dotenv`
+
+## Environment Variables
+
+The app uses environment variables for API keys and sensitive configuration. Create a `.env` file in the root directory:
+
+```bash
+# Copy the example file
+cp .env.example .env
+```
+
+Then update `.env` with your actual API keys:
+
+```env
+# Gemini API Configuration
+# Get your API key from: https://makersuite.google.com/app/apikey
+GEMINI_API_KEY=your_actual_gemini_api_key_here
+```
+
+**Important:** Never commit the `.env` file to version control. It's already added to `.gitignore`.
 
 ## Project Structure
 
