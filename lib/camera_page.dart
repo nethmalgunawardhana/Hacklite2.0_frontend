@@ -3,7 +3,10 @@ import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/asl_detection_service.dart';
+import 'services/backend_service.dart';
+import 'services/asl_backend_service.dart';
 import 'models/asl_prediction.dart';
 import 'widgets/hand_capture_widget.dart';
 
@@ -26,6 +29,10 @@ class _CameraPageState extends State<CameraPage> {
   // ASL Detection variables
   late ASLDetectionService _aslService;
   bool _isDetecting = false;
+  bool _useBackendOnly = false;
+  // Detection interval (ms) - configurable via env var
+  // Increased default to 2000ms to reduce backend request frequency
+  int _detectionIntervalMs = 2000;
   // Using ML detection only (no toggle)
   String _currentPrediction = "";
   double _currentConfidence = 0.0;
@@ -43,7 +50,33 @@ class _CameraPageState extends State<CameraPage> {
   void initState() {
     super.initState();
     _aslService = ASLDetectionService.instance;
-    _initializeASLService();
+    // Decide whether to use backend-only mode based on env var
+    _useBackendOnly = dotenv.env['ASL_BACKEND_ONLY'] == 'true';
+
+    // Read optional detection interval from env (milliseconds)
+    try {
+      final envInterval = dotenv.env['ASL_DETECTION_INTERVAL_MS'];
+      if (envInterval != null && envInterval.isNotEmpty) {
+        final parsed = int.tryParse(envInterval);
+        if (parsed != null && parsed > 0) {
+          _detectionIntervalMs = parsed;
+        }
+      }
+    } catch (_) {}
+
+    if (_useBackendOnly) {
+      // Initialize backend client instead of ML Kit
+      final backendUrl =
+          dotenv.env['ASL_BACKEND_URL'] ??
+          dotenv.env['BACKEND_URL'] ??
+          'http://localhost:5000';
+      ASLBackendService.instance.initialize(baseUrl: backendUrl);
+      setState(() {
+        _statusText = 'Using backend-only detection. Backend: $backendUrl';
+      });
+    } else {
+      _initializeASLService();
+    }
     _requestPermissions();
   }
 
@@ -171,7 +204,9 @@ class _CameraPageState extends State<CameraPage> {
     });
 
     _detectionTimer = Timer.periodic(
-      const Duration(milliseconds: 1500), // Process every 1.5 seconds
+      Duration(
+        milliseconds: _detectionIntervalMs,
+      ), // Process every configurable interval
       (timer) => _processGesture(),
     );
   }
@@ -199,17 +234,35 @@ class _CameraPageState extends State<CameraPage> {
       ASLPrediction? prediction;
 
       if (_controller != null && _currentCameraImage != null) {
-        // Use real ML Kit detection with actual camera image
-        try {
-          prediction = await _aslService.detectGestureFromCamera(
-            cameraImage: _currentCameraImage,
-          );
-        } catch (e) {
-          print('❌ ML Kit detection failed: $e');
-          setState(() {
-            _translationText = "❌ Detection error. Please try again.";
-          });
-          return;
+        // Decide based on mode: backend-only or local ML Kit
+        if (_useBackendOnly) {
+          try {
+            // send full camera image to backend for prediction
+            final backendPrediction = await ASLBackendService.instance
+                .predictFromCameraImage(_currentCameraImage!);
+
+            prediction = backendPrediction;
+          } catch (e) {
+            print('❌ Backend detection failed: $e');
+            setState(() {
+              _translationText =
+                  "❌ Backend detection error. Please check connection.";
+            });
+            return;
+          }
+        } else {
+          // Use real ML Kit detection with actual camera image
+          try {
+            prediction = await _aslService.detectGestureFromCamera(
+              cameraImage: _currentCameraImage,
+            );
+          } catch (e) {
+            print('❌ ML Kit detection failed: $e');
+            setState(() {
+              _translationText = "❌ Detection error. Please try again.";
+            });
+            return;
+          }
         }
       } else {
         // No camera image available
@@ -225,11 +278,35 @@ class _CameraPageState extends State<CameraPage> {
           // Add to history
           _detectionHistory.add(prediction);
 
-          // Update detected sentence (simple concatenation for now)
-          if (_detectedSentence.isEmpty ||
-              _detectedSentence[_detectedSentence.length - 1] !=
-                  prediction.letter) {
-            _detectedSentence += prediction.letter;
+          // Update detected sentence. If we're in backend-only mode the
+          // backend manages session-level assembly (assembled_text) so prefer
+          // that value. Otherwise do a simple concatenation locally.
+          if (_useBackendOnly) {
+            try {
+              final assembled = ASLBackendService.instance.assembledText;
+              if (assembled.isNotEmpty) {
+                _detectedSentence = assembled;
+              } else {
+                if (_detectedSentence.isEmpty ||
+                    _detectedSentence[_detectedSentence.length - 1] !=
+                        prediction.letter) {
+                  _detectedSentence += prediction.letter;
+                }
+              }
+            } catch (_) {
+              if (_detectedSentence.isEmpty ||
+                  _detectedSentence[_detectedSentence.length - 1] !=
+                      prediction.letter) {
+                _detectedSentence += prediction.letter;
+              }
+            }
+          } else {
+            // Local assembly when not using backend session
+            if (_detectedSentence.isEmpty ||
+                _detectedSentence[_detectedSentence.length - 1] !=
+                    prediction.letter) {
+              _detectedSentence += prediction.letter;
+            }
           }
 
           // Update translation text
@@ -239,6 +316,33 @@ class _CameraPageState extends State<CameraPage> {
               "📝 Sentence: $_detectedSentence\n"
               "🕒 Last detected: ${prediction.timestamp.toString().substring(11, 19)}";
         });
+
+        // Send detection to backend (backend-only flow)
+        try {
+          // Try to obtain landmark vector for richer payload
+          final landmarkVector = await _aslService.getLandmarkVector(
+            cameraImage: _currentCameraImage,
+          );
+
+          if (landmarkVector != null && landmarkVector.isNotEmpty) {
+            await BackendService.instance.sendDetection(
+              landmarks: landmarkVector,
+              prediction: prediction.letter,
+              confidence: prediction.confidence,
+              timestamp: prediction.timestamp,
+            );
+          } else {
+            // Send prediction-only payload if landmarks unavailable
+            await BackendService.instance.sendDetection(
+              landmarks: [],
+              prediction: prediction.letter,
+              confidence: prediction.confidence,
+              timestamp: prediction.timestamp,
+            );
+          }
+        } catch (e) {
+          print('❌ Failed to send detection to backend: $e');
+        }
       }
     } catch (e) {
       print('Error processing gesture: $e');

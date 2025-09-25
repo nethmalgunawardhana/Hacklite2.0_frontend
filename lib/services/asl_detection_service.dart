@@ -152,8 +152,24 @@ class ASLDetectionService {
         cameraImage.height.toDouble(),
       );
 
+      // Determine rotation and format more carefully. Rotation is left as
+      // rotation0deg here (device rotation should be handled by caller if
+      // needed). The important fix is mapping the camera ImageFormatGroup to
+      // the ML Kit InputImageFormat so ML Kit doesn't fail with
+      // "ImageFormat is not supported".
       const InputImageRotation imageRotation = InputImageRotation.rotation0deg;
-      const InputImageFormat inputImageFormat = InputImageFormat.nv21;
+
+      InputImageFormat inputImageFormat;
+      switch (cameraImage.format.group) {
+        case ImageFormatGroup.yuv420:
+          inputImageFormat = InputImageFormat.nv21;
+          break;
+        case ImageFormatGroup.bgra8888:
+          inputImageFormat = InputImageFormat.bgra8888;
+          break;
+        default:
+          inputImageFormat = InputImageFormat.nv21;
+      }
 
       final inputImageMetadata = InputImageMetadata(
         size: imageSize,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+// import 'package:speech_to_text/speech_to_text.dart' as stt; // Temporarily disabled due to build issues
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:video_player/video_player.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+// import 'package:youtube_player_flutter/youtube_player_flutter.dart'; // Temporarily commented
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/gestures.dart';
@@ -37,8 +37,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isProcessing = false;
 
-  // Speech to text
-  late stt.SpeechToText _speechToText;
+  // Speech to text - temporarily disabled due to build issues
+  // late stt.SpeechToText _speechToText;
   bool _isListening = false;
   String _lastWords = '';
 
@@ -51,7 +51,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void initState() {
     super.initState();
-    _speechToText = stt.SpeechToText();
+    // _speechToText = stt.SpeechToText(); // Temporarily disabled
     _initializeGemini();
     _loadKnowledgeBank();
     _addWelcomeMessage();
@@ -83,7 +83,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   void dispose() {
-    _speechToText.stop();
+    // _speechToText.stop(); // Temporarily disabled
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -301,99 +301,22 @@ Response should be comprehensive but not overwhelming.
   }
 
   Future<void> _startListening() async {
-    // Check if already listening
-    if (_isListening) {
-      await _stopListening();
-      return;
-    }
-
-    // Check if speech recognition is available
-    if (!_speechToText.isAvailable) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Speech recognition is not available. Please check your device settings.',
-            ),
-            duration: Duration(seconds: 3),
+    // Speech-to-text temporarily disabled due to build issues
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Speech recognition is temporarily disabled. Please type your message instead.',
           ),
-        );
-      }
-      return;
-    }
-
-    try {
-      bool available = await _speechToText.initialize(
-        onError: (error) {
-          print('Speech recognition error: $error');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Speech recognition error: $error'),
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-          setState(() => _isListening = false);
-        },
-        onStatus: (status) {
-          print('Speech recognition status: $status');
-          if (status == 'notListening' && _isListening) {
-            setState(() => _isListening = false);
-          }
-        },
-        options: [],
+          duration: Duration(seconds: 3),
+        ),
       );
-
-      if (available) {
-        setState(() => _isListening = true);
-
-        await _speechToText.listen(
-          onResult: (result) {
-            setState(() {
-              _lastWords = result.recognizedWords;
-              _textController.text = _lastWords;
-            });
-
-            if (result.finalResult && _lastWords.trim().isNotEmpty) {
-              // Automatically send the message when speech is finalized
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted && _lastWords.trim().isNotEmpty) {
-                  _sendMessage(_lastWords.trim());
-                  _stopListening();
-                }
-              });
-            }
-          },
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 2),
-        );
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Speech recognition not available on this device'),
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      print('Error starting speech recognition: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error starting speech recognition: $e'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-      setState(() => _isListening = false);
     }
+    return;
   }
 
   Future<void> _stopListening() async {
-    await _speechToText.stop();
+    // await _speechToText.stop(); // Temporarily disabled
     setState(() {
       _isListening = false;
       // Clear the last words when stopping
@@ -810,7 +733,8 @@ class VideoPlayerDialog extends StatefulWidget {
 
 class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
   VideoPlayerController? _videoController;
-  YoutubePlayerController? _youtubeController;
+  // YouTube controller - temporarily disabled due to build issues
+  // YoutubePlayerController? _youtubeController;
   bool _isInitialized = false;
   bool _isPlaying = false;
   bool _isYouTubeVideo = false;
@@ -857,20 +781,10 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
   }
 
   void _initializeYouTubePlayer() {
-    final videoId = _extractYouTubeVideoId(widget.videoUrl);
-    if (videoId != null) {
-      _youtubeController = YoutubePlayerController(
-        initialVideoId: videoId,
-        flags: const YoutubePlayerFlags(
-          autoPlay: false,
-          mute: false,
-          enableCaption: true,
-        ),
-      );
-      setState(() {
-        _isInitialized = true;
-      });
-    }
+    // YouTube player temporarily disabled due to build issues
+    setState(() {
+      _isInitialized = false; // Keep disabled
+    });
   }
 
   @override

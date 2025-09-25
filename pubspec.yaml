@@ -52,12 +52,11 @@ dependencies:
   intl: ^0.20.2
   flutter_svg: ^2.0.9
 
-
   # Storage for landmarks
   path_provider: ^2.1.2
 
   # Speech to text
-  speech_to_text: ^6.6.1
+  # speech_to_text: ^6.6.1  # Temporarily disabled due to Kotlin compilation issues
 
   # Gemini AI
   google_generative_ai: ^0.4.3
@@ -67,7 +66,14 @@ dependencies:
 
   # Video player
   video_player: ^2.8.2
-  youtube_player_flutter: ^8.1.2
+  # youtube_player_flutter: ^8.1.2  # Temporarily disabled due to build issues
+
+  # HTTP client for backend API
+  http: ^1.1.0
+
+# Override problematic dependencies to resolve Android namespace issues
+# dependency_overrides:
+#   flutter_inappwebview: ^6.1.5
 
 dev_dependencies:
   flutter_test:
@@ -89,7 +95,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

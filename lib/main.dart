@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'auth_pages.dart';
-import 'dashboard_page.dart';
+import 'pages/enhanced_dashboard.dart';
 import 'profile_page.dart';
 import 'camera_page.dart';
 import 'leaderboard_page.dart';
@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          DashboardPage(onNavigateToCamera: () => _onItemTapped(1)),
+          const EnhancedDashboard(),
           CameraPage(),
           LeaderboardPage(),
           ProfilePage(),
