@@ -193,7 +193,7 @@ class _QuizPageState extends State<QuizPage> {
   Color _optionBg(int index) {
     if (!answersChecked[currentQuestionIndex]) {
       return selectedAnswers[currentQuestionIndex] == index
-          ? const Color(0xFF4facfe)
+          ? const Color(0xFF1976D2)
           : Colors.white;
     }
     final correct = questions[currentQuestionIndex]['correctAnswer'] as int;
@@ -205,7 +205,7 @@ class _QuizPageState extends State<QuizPage> {
   Color _optionBorder(int index) {
     if (!answersChecked[currentQuestionIndex]) {
       return selectedAnswers[currentQuestionIndex] == index
-          ? const Color(0xFF4facfe)
+          ? const Color(0xFF1976D2)
           : Colors.grey.shade200;
     }
     final correct = questions[currentQuestionIndex]['correctAnswer'] as int;
@@ -218,21 +218,21 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF4facfe)),
+        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF1976D2)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF4facfe)),
+        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF1976D2)),
         body: Center(child: Text(errorMessage!)),
       );
     }
 
     if (questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF4facfe)),
+        appBar: AppBar(title: const Text('Practice Quiz'), backgroundColor: const Color(0xFF1976D2)),
         body: const Center(child: Text('No questions available')),
       );
     }
@@ -241,7 +241,7 @@ class _QuizPageState extends State<QuizPage> {
       final total = questions.length;
       final percent = total > 0 ? ((score / total) * 100).round() : 0;
       return Scaffold(
-        appBar: AppBar(title: const Text('Results'), backgroundColor: const Color(0xFF4facfe)),
+        appBar: AppBar(title: const Text('Results'), backgroundColor: const Color(0xFF1976D2)),
         body: Center(
           child: Card(
             margin: const EdgeInsets.all(24),
@@ -272,9 +272,10 @@ class _QuizPageState extends State<QuizPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.quizTitle ?? 'Practice Quiz'),
-        backgroundColor: const Color(0xFF4facfe),
+        backgroundColor: const Color(0xFF1976D2),
         actions: [Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('Score: $score')))],
       ),
+      backgroundColor: const Color(0xFFF4F7FB),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),

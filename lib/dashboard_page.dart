@@ -318,7 +318,7 @@ class _DashboardPageState extends State<DashboardPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFF4F7FB),
       floatingActionButton: Container(
         margin: const EdgeInsets.only(bottom: 16, right: 16),
         child: AnimatedBuilder(
@@ -343,7 +343,7 @@ class _DashboardPageState extends State<DashboardPage>
                   decoration: BoxDecoration(
                     color: Colors.black,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.blue.shade700, width: 5),
+                    border: Border.all(color: Color(0xFF1976D2), width: 5),
                   ),
                   child: Center(
                     child: Image.asset(
@@ -374,7 +374,7 @@ class _DashboardPageState extends State<DashboardPage>
               ),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                  colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -736,7 +736,7 @@ class _DashboardPageState extends State<DashboardPage>
           padding: EdgeInsets.all(28),
           child: Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
             ),
           ),
         ),
@@ -1006,7 +1006,7 @@ class _DashboardPageState extends State<DashboardPage>
           padding: EdgeInsets.all(28),
           child: Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
             ),
           ),
         ),

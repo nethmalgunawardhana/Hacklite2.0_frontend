@@ -99,7 +99,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
       padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+          colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -223,7 +223,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                       height: 64,
                       child: CircularProgressIndicator(
                         strokeWidth: 6,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
                       ),
                     ),
                     SizedBox(height: 18),
@@ -231,7 +231,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                       'Loading available quizzes...',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Color(0xFF4facfe),
+                        color: Color(0xFF1976D2),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -274,7 +274,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Select Quiz'),
-          backgroundColor: const Color(0xFF4facfe),
+          backgroundColor: const Color(0xFF1976D2),
         ),
         body: Container(
           decoration: const BoxDecoration(
@@ -301,7 +301,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                   ElevatedButton(
                     onPressed: _fetchAvailableQuizzes,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4facfe),
+                      backgroundColor: const Color(0xFF1976D2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 30,
                         vertical: 15,
@@ -327,7 +327,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F9FB),
+      backgroundColor: const Color(0xFFF4F7FB),
       body: SafeArea(
         child: Column(
           children: [
@@ -335,7 +335,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _fetchAvailableQuizzes,
-                color: const Color(0xFF4facfe),
+                color: const Color(0xFF1976D2),
                 child: filteredQuizzes.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -362,7 +362,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.search_off, size: 64, color: Color(0xFF4facfe)),
+                                  child: const Icon(Icons.search_off, size: 64, color: Color(0xFF1976D2)),
                                 ),
                                 const SizedBox(height: 18),
                                 const Text(
@@ -389,7 +389,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                                     _applyFilters();
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF4facfe),
+                                    backgroundColor: const Color(0xFF1976D2),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                   ),
                                   child: const Text('Reset Filters'),
@@ -405,7 +405,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
                         itemBuilder: (context, index) {
                           final quiz = filteredQuizzes[index];
                           final isASL = quiz['quizType'] == 'asl';
-                          final accent = isASL ? const Color(0xFF4FACFE) : const Color(0xFF48C78E);
+                          final accent = isASL ? const Color(0xFF1976D2) : const Color(0xFF48C78E);
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 14),

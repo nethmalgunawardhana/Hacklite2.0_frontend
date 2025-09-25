@@ -106,7 +106,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F9FF),
+      backgroundColor: const Color(0xFFF4F7FB),
       body: SafeArea(
         child: Column(
           children: [
@@ -116,7 +116,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                  colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -180,7 +180,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         _changeTimeframe(val);
                       },
                       borderRadius: BorderRadius.circular(8),
-                      selectedColor: Colors.blue.shade900,
+                      selectedColor: Color(0xFF1976D2),
                       color: Colors.white,
                       fillColor: Colors.white,
                       renderBorder: false,
@@ -213,14 +213,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
             ),
             SizedBox(height: 20),
             Text(
               'Loading champions...',
               style: TextStyle(
                 fontSize: 16,
-                color: Color(0xFF4facfe),
+                color: Color(0xFF1976D2),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -253,7 +253,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4facfe),
+                  backgroundColor: const Color(0xFF1976D2),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -294,7 +294,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               icon: const Icon(Icons.play_arrow),
               label: const Text('Start Learning'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4facfe),
+                backgroundColor: const Color(0xFF1976D2),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -306,7 +306,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF4facfe),
+      color: const Color(0xFF1976D2),
       onRefresh: _fetchLeaderboardData,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -333,7 +333,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     borderRadius: BorderRadius.circular(14),
                     gradient: isCurrentUser
                         ? const LinearGradient(
-                            colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                            colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           )
@@ -471,7 +471,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     if (index == 0) return Colors.amber; // Gold
     if (index == 1) return Colors.grey; // Silver
     if (index == 2) return Colors.brown; // Bronze
-    return const Color(0xFF4facfe); // Blue for others
+    return const Color(0xFF1976D2); // Blue for others
   }
 
   IconData _getRankIcon(int index) {
