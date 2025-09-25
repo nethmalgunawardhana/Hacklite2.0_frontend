@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:ui';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -58,12 +59,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           userBestScores[userId] = {
             'id': doc.id,
             'userId': data['userId'],
-            'userName': data['userName'],
+            'userName': data['userName'] ?? 'Unknown',
             'userEmail': data['userEmail'],
             'quizId': data['quizId'],
-            'quizTitle': data['quizTitle'],
-            'score': data['score'],
-            'totalQuestions': data['totalQuestions'],
+            'quizTitle': data['quizTitle'] ?? 'Quiz',
+            'score': data['score'] ?? 0,
+            'totalQuestions': data['totalQuestions'] ?? 0,
             'percentage': data['percentage'],
             'timestamp': data['timestamp'],
             'date': data['date'],
@@ -98,164 +99,114 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final toggleSelection = [
+      selectedTimeframe == 'all',
+      selectedTimeframe == 'month',
+      selectedTimeframe == 'week'
+    ];
+
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.white, Color(0xFFF8F9FA)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            child: _buildContent(),
-          ),
-          // Header Section
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.only(
-                top: 60,
-                left: 20,
-                right: 20,
-                bottom: 30,
-              ),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
+      backgroundColor: const Color(0xFFF6F9FF),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
                   colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '🏆 Leaderboard',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black26,
-                                  offset: Offset(0, 2),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            '${leaderboardData.length} champions',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withOpacity(0.9),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: DropdownButton<String>(
-                          value: selectedTimeframe,
-                          dropdownColor: const Color(0xFF4facfe),
-                          style: const TextStyle(
+                  // Back button
+                  Material(
+                    color: Colors.white.withOpacity(0.12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Title
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '🏆 Leaderboard',
+                          style: TextStyle(
                             color: Colors.white,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                          underline: const SizedBox(),
-                          icon: const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Colors.white,
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'all',
-                              child: Text('All Time'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'month',
-                              child: Text('This Month'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'week',
-                              child: Text('This Week'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              _changeTimeframe(value);
-                            }
-                          },
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          '${leaderboardData.length} champions • Best scores',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Timeframe segmented control
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withOpacity(0.06)),
+                    ),
+                    child: ToggleButtons(
+                      isSelected: toggleSelection,
+                      onPressed: (i) {
+                        final val = i == 0 ? 'all' : (i == 1 ? 'month' : 'week');
+                        _changeTimeframe(val);
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      selectedColor: Colors.blue.shade900,
+                      color: Colors.white,
+                      fillColor: Colors.white,
+                      renderBorder: false,
+                      constraints: const BoxConstraints(minWidth: 64, minHeight: 36),
+                      children: const [
+                        Text('All'),
+                        Text('Month'),
+                        Text('Week'),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-          // Back Button
-          Positioned(
-            top: 40,
-            left: 20,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-                padding: const EdgeInsets.all(12),
-              ),
+
+            // Content
+            Expanded(
+              child: _buildBodyContent(),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildBodyContent() {
     if (isLoading) {
       return const Center(
         child: Column(
@@ -285,8 +236,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 80, color: Colors.red),
-              const SizedBox(height: 20),
+              const Icon(Icons.error_outline, size: 72, color: Colors.red),
+              const SizedBox(height: 16),
               Text(
                 errorMessage!,
                 style: const TextStyle(
@@ -296,7 +247,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 18),
               ElevatedButton.icon(
                 onPressed: _fetchLeaderboardData,
                 icon: const Icon(Icons.refresh),
@@ -304,15 +255,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4facfe),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  shadowColor: const Color(0xFF4facfe).withOpacity(0.3),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],
@@ -334,21 +278,17 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               ),
               child: const Icon(
                 Icons.leaderboard,
-                size: 60,
+                size: 56,
                 color: Colors.grey,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             const Text(
               'No quiz scores yet.\nBe the first champion!',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 18),
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.play_arrow),
@@ -356,15 +296,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4facfe),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                shadowColor: const Color(0xFF4facfe).withOpacity(0.3),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ],
@@ -372,214 +305,165 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 180, bottom: 16),
-      itemCount: leaderboardData.length,
-      itemBuilder: (context, index) {
-        final entry = leaderboardData[index];
-        final isCurrentUser =
-            entry['userId'] == FirebaseAuth.instance.currentUser?.uid;
+    return RefreshIndicator(
+      color: const Color(0xFF4facfe),
+      onRefresh: _fetchLeaderboardData,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: leaderboardData.length,
+        itemBuilder: (context, index) {
+          final entry = leaderboardData[index];
+          final isCurrentUser = entry['userId'] == FirebaseAuth.instance.currentUser?.uid;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Card(
-            elevation: 0,
-            margin: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: isCurrentUser
-                    ? const LinearGradient(
-                        colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      )
-                    : index < 3
-                    ? LinearGradient(
-                        colors: [
-                          _getRankColor(index).withOpacity(0.1),
-                          _getRankColor(index).withOpacity(0.05),
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      )
-                    : null,
-                border: isCurrentUser
-                    ? Border.all(color: Colors.white.withOpacity(0.3), width: 1)
-                    : null,
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(20),
-                leading: Container(
-                  width: 50,
-                  height: 50,
+          final primaryColor = _getRankColor(index);
+          final titleColor = isCurrentUser ? Colors.white : Colors.black87;
+          final subtitleColor = isCurrentUser ? Colors.white70 : Colors.grey[700];
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              borderRadius: BorderRadius.circular(14),
+              elevation: isCurrentUser ? 6 : 2,
+              color: isCurrentUser ? null : Colors.white,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {},
+                child: Container(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        _getRankColor(index),
-                        _getRankColor(index).withOpacity(0.7),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _getRankColor(index).withOpacity(0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: isCurrentUser
+                        ? const LinearGradient(
+                            colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          )
+                        : index < 3
+                            ? LinearGradient(
+                                colors: [
+                                  Colors.white,
+                                  Colors.white.withOpacity(0.98),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              )
+                            : null,
+                    border: isCurrentUser
+                        ? Border.all(color: Colors.white.withOpacity(0.16), width: 1)
+                        : Border.all(color: Colors.grey.withOpacity(0.06)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Row(
+                    children: [
+                      // Rank avatar
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [primaryColor.withOpacity(0.95), primaryColor.withOpacity(0.7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.22),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            )
+                          ],
+                        ),
+                        child: Center(
+                          child: index < 3
+                              ? Icon(_getRankIcon(index), color: Colors.white, size: 20)
+                              : Text(
+                                  '${index + 1}',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Name + details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    entry['userName'] as String,
+                                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: titleColor),
+                                  ),
+                                ),
+                                if (isCurrentUser)
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.16),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Text(
+                                      'YOU',
+                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(Icons.quiz, size: 14, color: subtitleColor),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${entry['score']}/${entry['totalQuestions']} correct',
+                                  style: TextStyle(color: subtitleColor, fontSize: 13),
+                                ),
+                                const SizedBox(width: 12),
+                                Icon(Icons.book, size: 14, color: subtitleColor),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    entry['quizTitle'] as String,
+                                    style: TextStyle(color: subtitleColor, fontSize: 13),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Percentage badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isCurrentUser ? Colors.white.withOpacity(0.16) : primaryColor.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: primaryColor.withOpacity(0.14)),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${entry['percentage']}%',
+                              style: TextStyle(color: isCurrentUser ? Colors.white : primaryColor, fontWeight: FontWeight.w800, fontSize: 14),
+                            ),
+                            const SizedBox(height: 2),
+                            Text('score', style: TextStyle(color: isCurrentUser ? Colors.white70 : primaryColor.withOpacity(0.9), fontSize: 10)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: index < 3
-                        ? Icon(
-                            _getRankIcon(index),
-                            color: Colors.white,
-                            size: 24,
-                          )
-                        : Text(
-                            '${index + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                  ),
-                ),
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        entry['userName'] as String,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: isCurrentUser ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ),
-                    if (isCurrentUser)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'YOU',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.quiz,
-                          size: 16,
-                          color: isCurrentUser
-                              ? Colors.white70
-                              : Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${entry['score']}/${entry['totalQuestions']} correct',
-                          style: TextStyle(
-                            color: isCurrentUser
-                                ? Colors.white70
-                                : Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.book,
-                          size: 16,
-                          color: isCurrentUser
-                              ? Colors.white70
-                              : Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            entry['quizTitle'] as String,
-                            style: TextStyle(
-                              color: isCurrentUser
-                                  ? Colors.white70
-                                  : Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isCurrentUser
-                        ? Colors.white.withOpacity(0.2)
-                        : const Color(0xFF4facfe).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isCurrentUser
-                          ? Colors.white.withOpacity(0.3)
-                          : const Color(0xFF4facfe).withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    '${entry['percentage']}%',
-                    style: TextStyle(
-                      color: isCurrentUser
-                          ? Colors.white
-                          : const Color(0xFF4facfe),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
