@@ -288,7 +288,7 @@ class _DashboardPageState extends State<DashboardPage>
             'subtitle': 'Start your sign language journey',
             'time': 'Just now',
             'icon': Icons.waving_hand,
-            'color': Colors.purple,
+            'color': Colors.blue,
             'timestamp': DateTime.now(),
           },
         ];
@@ -532,7 +532,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Start Camera',
                         'Translate signs in real-time',
                         Icons.camera_alt,
-                        [Colors.green.shade400, Colors.green.shade200],
+                        [Colors.blue.shade800, Colors.blue.shade200],
                         () {
                           if (widget.onNavigateToCamera != null) {
                             widget.onNavigateToCamera!();
@@ -551,7 +551,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Quizzes',
                         'Learn & test skills',
                         Icons.school,
-                        [Colors.orange.shade400, Colors.orange.shade200],
+                        [Colors.blue.shade800, Colors.blue.shade300],
                         () {
                           Navigator.push(
                             context,
@@ -565,7 +565,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Dictionary',
                         'Browse ASL signs',
                         Icons.book,
-                        [Colors.purple.shade400, Colors.deepPurple.shade200],
+                       [Colors.blue.shade800, Colors.blue.shade300],
                         () {
                           Navigator.push(
                             context,
@@ -579,7 +579,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Practice',
                         'Learn new signs',
                         Icons.sign_language,
-                        [Colors.teal.shade400, Colors.teal.shade200],
+                        [Colors.blue.shade800, Colors.blue.shade300],
                         () {
                           Navigator.push(
                             context,
@@ -596,7 +596,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Set Goals',
                         'Plan your learning',
                         Icons.flag,
-                        [Colors.indigo.shade400, Colors.indigo.shade200],
+                       [Colors.blue.shade800, Colors.blue.shade300],
                         () {
                           Navigator.push(
                             context,
@@ -610,7 +610,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Leaderboard',
                         'See your ranking',
                         Icons.leaderboard,
-                        [Colors.amber.shade600, Colors.amber.shade300],
+                        [Colors.blue.shade800, Colors.blue.shade300],
                         () {
                           Navigator.push(
                             context,
@@ -830,7 +830,7 @@ class _DashboardPageState extends State<DashboardPage>
                 height: 64,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.purple.shade300, Colors.purple.shade100],
+                    colors: [Colors.blue.shade400, Colors.blue.shade300],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),

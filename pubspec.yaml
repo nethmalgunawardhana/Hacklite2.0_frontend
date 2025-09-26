@@ -57,7 +57,7 @@ dependencies:
   shared_preferences: ^2.2.2
 
   # Speech to text
-  # speech_to_text: ^6.6.1  # Temporarily disabled due to compatibility issues
+  speech_to_text: ^6.6.1
 
   # Gemini AI
   google_generative_ai: ^0.4.3

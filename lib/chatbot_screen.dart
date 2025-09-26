@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:video_player/video_player.dart';
 // import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -8,6 +8,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/gestures.dart';
 import 'services/chat_service.dart';
 import 'services/environment_config.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Message {
   final bool isUser;
@@ -38,8 +39,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isProcessing = false;
 
-  // Speech to text (temporarily disabled)
-  // late stt.SpeechToText _speechToText;
+  // Speech to text
+  late stt.SpeechToText _speechToText;
   bool _isListening = false;
   String _lastWords = '';
 
@@ -58,7 +59,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void initState() {
     super.initState();
-    // _speechToText = stt.SpeechToText();
+    _speechToText = stt.SpeechToText();
     _chatService = ChatService();
     _checkAuthentication();
     _initializeGemini();
@@ -104,7 +105,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   void dispose() {
-    // _speechToText.stop();
+    _speechToText.stop();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -395,27 +396,51 @@ Response should be comprehensive but not overwhelming.
   }
 
   Future<void> _startListening() async {
-    // Speech-to-text temporarily disabled
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Voice input is temporarily disabled. Please type your message.',
-          ),
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-    return;
-  }
+    if (!_isListening) {
+      // Request microphone permission
+      var status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Microphone permission is required for voice input.',
+              ),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
 
-  Future<void> _stopListening() async {
-    // Speech-to-text temporarily disabled
-    setState(() {
-      _isListening = false;
-      _lastWords = '';
-    });
-    return;
+      bool available = await _speechToText.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speechToText.listen(
+          onResult: (val) => setState(() {
+            _lastWords = val.recognizedWords;
+            _textController.text = _lastWords;
+          }),
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Speech recognition is not available on this device.',
+              ),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speechToText.stop();
+    }
   }
 
   Widget _buildTypingIndicator() {
