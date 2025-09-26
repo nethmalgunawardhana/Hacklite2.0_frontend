@@ -7,6 +7,8 @@ import 'sign_learning_page.dart';
 import 'goal_setting_page.dart';
 import 'sign_dictionary_page.dart';
 import 'chatbot_screen.dart';
+import 'services/app_notification_service.dart';
+import 'widgets/notification_panel.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback? onNavigateToCamera;
@@ -92,10 +94,21 @@ class _DashboardPageState extends State<DashboardPage>
       final snapshot = await FirebaseFirestore.instance
           .collection('leaderboard')
           .where('userId', isEqualTo: user!.uid)
-          .orderBy('timestamp', descending: true)
           .get();
 
-      if (snapshot.docs.isEmpty) {
+      // Sort in memory instead of requiring index
+      final sortedDocs = snapshot.docs.toList()
+        ..sort((a, b) {
+          final aTime =
+              (a.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime =
+              (b.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+
+      if (sortedDocs.isEmpty) {
         setState(() {
           isLoadingStats = false;
         });
@@ -104,9 +117,9 @@ class _DashboardPageState extends State<DashboardPage>
 
       int totalScore = 0;
       int maxScore = 0;
-      int totalQuizzes = snapshot.docs.length;
+      int totalQuizzes = sortedDocs.length;
 
-      for (var doc in snapshot.docs) {
+      for (var doc in sortedDocs) {
         final data = doc.data();
         final percentage = data['percentage'] as int? ?? 0;
         totalScore += percentage;
@@ -216,13 +229,24 @@ class _DashboardPageState extends State<DashboardPage>
       final activitiesSnapshot = await FirebaseFirestore.instance
           .collection('activities')
           .where('userId', isEqualTo: user!.uid)
-          .orderBy('timestamp', descending: true)
           .limit(10)
           .get();
 
+      // Sort in memory instead of requiring index
+      final sortedActivities = activitiesSnapshot.docs.toList()
+        ..sort((a, b) {
+          final aTime =
+              (a.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime =
+              (b.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+
       List<Map<String, dynamic>> activities = [];
 
-      for (var doc in activitiesSnapshot.docs) {
+      for (var doc in sortedActivities) {
         final data = doc.data();
         final timestamp = data['timestamp'] as Timestamp?;
         final timeAgo = timestamp != null
@@ -313,6 +337,19 @@ class _DashboardPageState extends State<DashboardPage>
     } else {
       return 'Just now';
     }
+  }
+
+  void _showNotificationPanel() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 40),
+        child: const NotificationPanel(),
+      ),
+    );
   }
 
   @override
@@ -445,6 +482,57 @@ class _DashboardPageState extends State<DashboardPage>
                               ),
                             ],
                           ),
+                          // Notification Icon
+                          StreamBuilder<int>(
+                            stream: AppNotificationService.instance
+                                .getUnreadCountStream(),
+                            builder: (context, snapshot) {
+                              final unreadCount = snapshot.data ?? 0;
+                              return Container(
+                                margin: const EdgeInsets.only(right: 16),
+                                child: Stack(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => _showNotificationPanel(),
+                                      icon: const Icon(
+                                        Icons.notifications_outlined,
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
+                                      tooltip: 'Notifications',
+                                    ),
+                                    if (unreadCount > 0)
+                                      Positioned(
+                                        right: 6,
+                                        top: 6,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.redAccent,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 18,
+                                            minHeight: 18,
+                                          ),
+                                          child: Text(
+                                            unreadCount > 99
+                                                ? '99+'
+                                                : unreadCount.toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                           // avatar with subtle glow pulse
                           ScaleTransition(
                             scale: Tween(
@@ -565,7 +653,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Dictionary',
                         'Browse ASL signs',
                         Icons.book,
-                       [Colors.blue.shade800, Colors.blue.shade300],
+                        [Colors.blue.shade800, Colors.blue.shade300],
                         () {
                           Navigator.push(
                             context,
@@ -596,7 +684,7 @@ class _DashboardPageState extends State<DashboardPage>
                         'Set Goals',
                         'Plan your learning',
                         Icons.flag,
-                       [Colors.blue.shade800, Colors.blue.shade300],
+                        [Colors.blue.shade800, Colors.blue.shade300],
                         () {
                           Navigator.push(
                             context,
