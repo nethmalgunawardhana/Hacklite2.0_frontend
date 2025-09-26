@@ -534,31 +534,33 @@ class _CameraPageV2State extends State<CameraPageV2> {
                                         // _buildCornerIndicator(Alignment.bottomLeft),
                                         // _buildCornerIndicator(Alignment.bottomRight),
 
-                                        // Center instruction
-                                        Center(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 20,
-                                              vertical: 12,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withOpacity(
-                                                0.7,
+                                        // Center instruction - show only when not detecting
+                                        if (!_isDetecting)
+                                          Center(
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 20,
+                                                    vertical: 12,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withOpacity(
+                                                  0.7,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: const Text(
-                                              'Keep your hand\nin this area',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
+                                              child: const Text(
+                                                'Keep your hand\nin this area',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),
@@ -791,7 +793,10 @@ class _CameraPageV2State extends State<CameraPageV2> {
                               constraints: const BoxConstraints(maxHeight: 120),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                                  colors: [
+                                    Color(0xFF4facfe),
+                                    Color(0xFF00f2fe),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(15),
                               ),
@@ -820,13 +825,20 @@ class _CameraPageV2State extends State<CameraPageV2> {
                                               vertical: 6,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(12),
+                                              color: Colors.white.withOpacity(
+                                                0.2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: const Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Icon(Icons.clear, size: 16, color: Colors.white),
+                                                Icon(
+                                                  Icons.clear,
+                                                  size: 16,
+                                                  color: Colors.white,
+                                                ),
                                                 SizedBox(width: 4),
                                                 Text(
                                                   'Clear',
@@ -846,7 +858,12 @@ class _CameraPageV2State extends State<CameraPageV2> {
                                   // Text content
                                   Expanded(
                                     child: SingleChildScrollView(
-                                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        0,
+                                        16,
+                                        16,
+                                      ),
                                       child: Text(
                                         _assembledText,
                                         style: const TextStyle(
@@ -865,7 +882,10 @@ class _CameraPageV2State extends State<CameraPageV2> {
                       )
                     : // Compact control bar when no translated text
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: const BorderRadius.only(
@@ -905,38 +925,8 @@ class _CameraPageV2State extends State<CameraPageV2> {
                               ],
                             ),
 
-                            // Small action area: keep a compact clear/controls area
-                            Row(
-                              children: [
-                                // Small toggle hint (not functional when camera not ready)
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: _isDetecting ? Colors.red : Colors.green,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    _isDetecting ? Icons.stop : Icons.play_arrow,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // Small settings icon to match header options
-                                GestureDetector(
-                                  onTap: () => Navigator.pushNamed(context, '/settings'),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(Icons.settings, size: 18, color: Colors.black54),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // Removed compact play/settings controls - keep this area empty
+                            const SizedBox.shrink(),
                           ],
                         ),
                       ),

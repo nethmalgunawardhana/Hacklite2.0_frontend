@@ -48,6 +48,8 @@ class BackendPredictionService {
   bool _isInitialized = false;
   bool _isServerHealthy = true;
   Duration _currentUploadInterval = defaultUploadInterval;
+  bool _useConstantInterval =
+      false; // when true, always upload on the fixed interval
   String? _sessionId;
   Uint8List? _lastFrameData;
   DateTime? _lastUploadTime;
@@ -133,6 +135,7 @@ class BackendPredictionService {
   Future<void> startPrediction({
     required Stream<CameraImage> cameraStream,
     Duration uploadInterval = defaultUploadInterval,
+    bool useConstantInterval = false,
     Function(ASLPrediction)? onPrediction,
     Function(String)? onAssembledTextUpdate,
     Function(String)? onError,
@@ -147,6 +150,8 @@ class BackendPredictionService {
       minUploadInterval,
       maxUploadInterval,
     );
+
+    _useConstantInterval = useConstantInterval;
 
     print(
       '🚀 Starting backend prediction at ${1000 ~/ _currentUploadInterval.inMilliseconds} FPS',
@@ -163,9 +168,11 @@ class BackendPredictionService {
           return;
         }
 
-        // Frame difference check for stability
-        if (!await _shouldUploadFrame(cameraImage)) {
-          return;
+        // Frame difference check for stability (skip when using constant interval)
+        if (!_useConstantInterval) {
+          if (!await _shouldUploadFrame(cameraImage)) {
+            return;
+          }
         }
 
         _lastUploadTime = now;
@@ -603,7 +610,9 @@ class BackendPredictionService {
 
   /// Handle upload failure by adjusting frequency
   void _handleUploadFailure() {
-    // Reduce frequency on continuous failures
+    // Reduce frequency on continuous failures (disabled when constant interval)
+    if (_useConstantInterval) return;
+
     if (_failedUploads > 3 && _successfulUploads < 2) {
       final newInterval = Duration(
         milliseconds: (_currentUploadInterval.inMilliseconds * 1.5).round(),

@@ -37,7 +37,7 @@ dependencies:
 
   # Firebase dependencies
   firebase_core: ^2.32.0
-  firebase_auth: ^4.19.4
+  firebase_auth: ^4.16.0
   cloud_firestore: ^4.17.3
 
   # Camera dependencies
@@ -57,7 +57,7 @@ dependencies:
   shared_preferences: ^2.2.2
 
   # Speech to text
-  speech_to_text: ^6.6.1
+  # speech_to_text: ^6.6.0  # Temporarily disabled due to build issues
 
   # Gemini AI
   google_generative_ai: ^0.4.3

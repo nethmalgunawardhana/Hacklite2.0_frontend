@@ -63,9 +63,11 @@ class ASLDetectionServiceV2 {
     try {
       _isDetecting = true;
 
-      // Start backend prediction
+      // Start backend prediction (use constant interval to force regular uploads)
       await _backendService!.startPrediction(
         cameraStream: cameraStream,
+        uploadInterval: const Duration(milliseconds: 4000),
+        useConstantInterval: true,
         onPrediction: (prediction) {
           _predictionStreamController?.add(prediction);
         },
@@ -90,7 +92,7 @@ class ASLDetectionServiceV2 {
         },
       );
 
-      print('🚀 Backend detection started at fixed 2000ms interval');
+      print('🚀 Backend detection started at fixed ${4000}ms interval');
       return true;
     } catch (e) {
       print('❌ Failed to start detection: $e');
@@ -127,7 +129,8 @@ class ASLDetectionServiceV2 {
   String get currentAssembledText => _currentAssembledText;
 
   /// Get current FPS setting
-  int get currentFPS => 0; // Fixed at 2000ms interval
+  int get currentFPS =>
+      _backendService?.getNetworkStats()['currentFPS'] ?? (1000 ~/ 4000);
 
   /// Get last error message
   String get lastError => _lastError;
