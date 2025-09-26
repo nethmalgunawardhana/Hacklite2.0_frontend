@@ -313,15 +313,34 @@ class BackendPredictionService {
       }
 
       // Apply orientation correction - test if backend receives rotated images
-      // If backend receives images rotated 90° clockwise, uncomment the next line:
+      // If backend receives images rotated 90° clockwise, uncomment/change the next line
       image = img.copyRotate(
         image,
         angle: -90,
       ); // Rotate counter-clockwise by 90°
 
+      // IMPORTANT: preserve aspect ratio to avoid squashing.
+      // The previous behavior directly resized any rectangular image to a
+      // square (targetImageSize x targetImageSize) which distorts the image.
+      // Here we center-crop the longer side to a square first, then resize
+      // to the target square. This keeps the content undistorted.
+      final int srcWidth = image.width;
+      final int srcHeight = image.height;
+      final int squareSize = math.min(srcWidth, srcHeight);
+      final int offsetX = ((srcWidth - squareSize) / 2).round();
+      final int offsetY = ((srcHeight - squareSize) / 2).round();
+
+      final cropped = img.copyCrop(
+        image,
+        x: offsetX,
+        y: offsetY,
+        width: squareSize,
+        height: squareSize,
+      );
+
       // Resize to target size with high quality interpolation
       final resized = img.copyResize(
-        image,
+        cropped,
         width: targetImageSize,
         height: targetImageSize,
         interpolation: img.Interpolation.cubic, // Higher quality interpolation
@@ -657,9 +676,74 @@ class BackendPredictionService {
     };
   }
 
-  /// Clear assembled text state
-  void clearAssembledText() {
+  /// Clear assembled text state locally and on the backend (/clear-session).
+  ///
+  /// Sends a JSON POST {"session_id": "..."} to the backend clear endpoint.
+  /// Uses the same retry/backoff strategy as uploads. This method is safe to
+  /// call without awaiting; failures are logged but won't throw.
+  Future<void> clearAssembledText() async {
     _lastAssembledText = '';
+
+    // Don't call backend in mock mode
+    if (EnvironmentConfig.useLocalMock) {
+      print('ℹ️ Mock mode enabled - skipping backend clear-session call');
+      return;
+    }
+
+    if (_sessionId == null) {
+      print('⚠️ No session ID available to clear backend session');
+      return;
+    }
+
+    final uri = '${EnvironmentConfig.aslBackendUrlSync}/clear-session';
+    final payload = {'session_id': _sessionId};
+
+    for (int attempt = 1; attempt <= retryAttempts; attempt++) {
+      try {
+        final response = await _dio.post(
+          uri,
+          data: payload,
+          options: Options(headers: {'Content-Type': 'application/json'}),
+        );
+
+        if (response.statusCode == 200) {
+          print('✅ Cleared backend assembled text for session $_sessionId');
+          return;
+        } else {
+          print(
+            '⚠️ Clear-session HTTP ${response.statusCode}: ${response.statusMessage}',
+          );
+        }
+      } catch (e) {
+        // If Dio returned a non-2xx (e.g. 404), it may be surfaced here as a
+        // DioException. Treat 404 (session not found) as a successful outcome
+        // for our purposes (nothing to clear on the backend).
+        if (e is DioException) {
+          final status = e.response?.statusCode;
+          if (status == 404) {
+            print(
+              'ℹ️ Backend responded 404 for clear-session: session not found (treated as cleared) for session $_sessionId',
+            );
+            return;
+          }
+        }
+
+        if (attempt == retryAttempts) {
+          print(
+            '❌ Failed to clear backend session after $attempt attempts: $e',
+          );
+          return;
+        }
+
+        final delay = Duration(
+          milliseconds: retryDelay.inMilliseconds * attempt,
+        );
+        print(
+          '⚠️ Attempt $attempt to clear session failed, retrying in ${delay.inMilliseconds}ms...',
+        );
+        await Future.delayed(delay);
+      }
+    }
   }
 
   /// Test and save a captured image for quality verification (DEBUG ONLY)
