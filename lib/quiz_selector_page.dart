@@ -238,7 +238,7 @@ class _QuizSelectorPageState extends State<QuizSelectorPage> {
       selectedColor: Colors.white,
       backgroundColor: Colors.white24,
       labelStyle: TextStyle(
-        color: selected ? Colors.blueGrey[900] : Colors.white,
+        color: selected ? Colors.blueGrey[900] : Colors.black,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     );
