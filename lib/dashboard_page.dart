@@ -99,8 +99,12 @@ class _DashboardPageState extends State<DashboardPage>
       // Sort in memory instead of requiring index
       final sortedDocs = snapshot.docs.toList()
         ..sort((a, b) {
-          final aTime = (a.data()['timestamp'] as Timestamp?)?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final bTime = (b.data()['timestamp'] as Timestamp?)?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final aTime =
+              (a.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime =
+              (b.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
           return bTime.compareTo(aTime);
         });
 
@@ -231,8 +235,12 @@ class _DashboardPageState extends State<DashboardPage>
       // Sort in memory instead of requiring index
       final sortedActivities = activitiesSnapshot.docs.toList()
         ..sort((a, b) {
-          final aTime = (a.data()['timestamp'] as Timestamp?)?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final bTime = (b.data()['timestamp'] as Timestamp?)?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final aTime =
+              (a.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime =
+              (b.data()['timestamp'] as Timestamp?)?.toDate() ??
+              DateTime.fromMillisecondsSinceEpoch(0);
           return bTime.compareTo(aTime);
         });
 
