@@ -482,57 +482,6 @@ class _DashboardPageState extends State<DashboardPage>
                               ),
                             ],
                           ),
-                          // Notification Icon
-                          StreamBuilder<int>(
-                            stream: AppNotificationService.instance
-                                .getUnreadCountStream(),
-                            builder: (context, snapshot) {
-                              final unreadCount = snapshot.data ?? 0;
-                              return Container(
-                                margin: const EdgeInsets.only(right: 16),
-                                child: Stack(
-                                  children: [
-                                    IconButton(
-                                      onPressed: () => _showNotificationPanel(),
-                                      icon: const Icon(
-                                        Icons.notifications_outlined,
-                                        color: Colors.white,
-                                        size: 28,
-                                      ),
-                                      tooltip: 'Notifications',
-                                    ),
-                                    if (unreadCount > 0)
-                                      Positioned(
-                                        right: 6,
-                                        top: 6,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.redAccent,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 18,
-                                            minHeight: 18,
-                                          ),
-                                          child: Text(
-                                            unreadCount > 99
-                                                ? '99+'
-                                                : unreadCount.toString(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
                           // avatar with subtle glow pulse
                           ScaleTransition(
                             scale: Tween(
@@ -570,29 +519,55 @@ class _DashboardPageState extends State<DashboardPage>
                             ),
                           ),
                           const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              if (widget.onNavigateToCamera != null) {
-                                widget.onNavigateToCamera!();
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Switch to Camera tab to start translating!',
+                          // Notification Icon
+                          StreamBuilder<int>(
+                            stream: AppNotificationService.instance
+                                .getUnreadCountStream(),
+                            builder: (context, snapshot) {
+                              final unreadCount = snapshot.data ?? 0;
+                              return Container(
+                                child: Stack(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => _showNotificationPanel(),
+                                      icon: const Icon(
+                                        Icons.notifications_outlined,
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
+                                      tooltip: 'Notifications',
                                     ),
-                                  ),
-                                );
-                              }
+                                    if (unreadCount > 0)
+                                      Positioned(
+                                        right: 6,
+                                        top: 6,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.redAccent,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 18,
+                                            minHeight: 18,
+                                          ),
+                                          child: Text(
+                                            unreadCount > 99
+                                                ? '99+'
+                                                : unreadCount.toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
                             },
-                            icon: const Icon(Icons.camera_alt_outlined),
-                            label: const Text('Live Translate'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white24,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
                           ),
                         ],
                       ),
