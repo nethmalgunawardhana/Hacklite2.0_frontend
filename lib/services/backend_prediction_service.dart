@@ -39,6 +39,8 @@ class BackendPredictionService {
   static const int retryAttempts = 3;
   static const Duration retryDelay = Duration(seconds: 2);
   static const Duration healthCheckInterval = Duration(seconds: 30);
+  static const Duration healthCheckIntervalFast = Duration(seconds: 5);
+  static const Duration healthCheckIntervalSlow = Duration(minutes: 2);
   static const double frameDifferenceThreshold =
       0.1; // 10% difference threshold
 
@@ -61,6 +63,10 @@ class BackendPredictionService {
   // Smoothing buffer
   final List<String> _predictionBuffer = [];
   static const int smoothingBufferSize = 3;
+
+  // Health check state
+  int _consecutiveHealthFailures = 0;
+  DateTime? _lastHealthCheck;
 
   // Mock data for development
   static const List<Map<String, dynamic>> _mockResponses = [
@@ -252,6 +258,12 @@ class BackendPredictionService {
           '✅ Prediction: ${backendResponse.predictedLabel} (${(backendResponse.topPrediction?.score ?? 0).toStringAsFixed(2)})',
         );
         return backendResponse;
+      } else if (response.statusCode != null && response.statusCode! >= 500) {
+        // 5xx errors - force immediate health check
+        _forceHealthCheck();
+        throw Exception(
+          'Server Error HTTP ${response.statusCode}: ${response.statusMessage}',
+        );
       } else {
         throw Exception(
           'HTTP ${response.statusCode}: ${response.statusMessage}',
@@ -275,6 +287,13 @@ class BackendPredictionService {
         );
         return response;
       } catch (e) {
+        // Check if it's a 5xx error and trigger health check
+        if (e is DioException &&
+            e.response?.statusCode != null &&
+            e.response!.statusCode! >= 500) {
+          _forceHealthCheck();
+        }
+
         if (attempt == retryAttempts) {
           rethrow;
         }
@@ -612,19 +631,70 @@ class BackendPredictionService {
         : _latencyHistory.reduce((a, b) => a + b) / _latencyHistory.length;
   }
 
-  /// Start periodic health check
+  /// Start adaptive health check with frequency based on backend status
   void _startHealthCheck() {
-    _healthCheckTimer = Timer.periodic(healthCheckInterval, (timer) async {
-      try {
-        final response = await _dio.get(
-          '${EnvironmentConfig.aslBackendUrlSync}/health',
-        );
-        _isServerHealthy = response.statusCode == 200;
-      } catch (e) {
-        _isServerHealthy = false;
-        print('⚠️ Server health check failed: $e');
+    _performHealthCheck(); // Initial check
+    _scheduleNextHealthCheck();
+  }
+
+  /// Perform a single health check
+  Future<void> _performHealthCheck() async {
+    _lastHealthCheck = DateTime.now();
+
+    try {
+      final response = await _dio.get(
+        '${EnvironmentConfig.aslBackendUrlSync}/health',
+      );
+
+      final wasHealthy = _isServerHealthy;
+      _isServerHealthy = response.statusCode == 200;
+
+      if (_isServerHealthy) {
+        _consecutiveHealthFailures = 0;
+        if (!wasHealthy) {
+          print('✅ Backend is back online');
+        }
+      } else {
+        _consecutiveHealthFailures++;
+        print('⚠️ Backend health check failed: HTTP ${response.statusCode}');
       }
-    });
+    } catch (e) {
+      _isServerHealthy = false;
+      _consecutiveHealthFailures++;
+      print('⚠️ Server health check failed: $e');
+    }
+
+    _scheduleNextHealthCheck();
+  }
+
+  /// Schedule the next health check based on current backend status
+  void _scheduleNextHealthCheck() {
+    _healthCheckTimer?.cancel();
+
+    Duration nextCheckInterval;
+
+    if (_isServerHealthy && _consecutiveHealthFailures == 0) {
+      // Backend is healthy - check less frequently
+      nextCheckInterval = healthCheckIntervalSlow;
+    } else if (_consecutiveHealthFailures > 0) {
+      // Backend has issues - check more frequently
+      nextCheckInterval = healthCheckIntervalFast;
+    } else {
+      // Default interval
+      nextCheckInterval = healthCheckInterval;
+    }
+
+    _healthCheckTimer = Timer(nextCheckInterval, _performHealthCheck);
+  }
+
+  /// Force an immediate health check (called when 5xx errors occur)
+  void _forceHealthCheck() {
+    if (_lastHealthCheck == null ||
+        DateTime.now().difference(_lastHealthCheck!) >
+            const Duration(seconds: 5)) {
+      print('🔄 Forcing immediate health check due to server error');
+      _performHealthCheck();
+    }
   }
 
   /// Get mock response for development (public for testing)
